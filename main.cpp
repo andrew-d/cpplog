@@ -325,6 +325,58 @@ int TestBackgroundLogger()
 	return failed;
 }
 
+class CountingLogger : public BaseLogger
+{
+private:
+	int			m_logMessageCount;
+
+public:
+	CountingLogger()
+		: m_logMessageCount(0)
+	{ }
+
+	virtual bool sendLogMessage(LogData* logData)
+	{
+		m_logMessageCount++;
+		return true;
+	}
+
+	int getCount()
+	{
+		return m_logMessageCount;
+	}
+};
+
+int TestBackgroundLoggerConcurrency()
+{
+	int failed = 0;
+	CountingLogger clog;
+	const int numMessages = 10000;
+
+	cout << "Testing BackgroundLogger for consistency... " << flush;
+
+	// Scoped!
+	{
+		BackgroundLogger blog(clog);
+
+		for( int i = 0; i < numMessages; i++ )
+		{
+			LOG_INFO(blog) << "Message " << i << std::endl;
+		}
+	}
+
+	// Validate the number of messages sent.
+	if( clog.getCount() != numMessages )
+	{
+		cerr << "Mismatch detected!  Sent: " << numMessages << ", Received: " << clog.getCount() << endl;
+		failed++;
+	}
+
+	cout << "done!" << endl;
+
+	return failed;
+}
+
 int TestLogging()
 {
 	int totalFailures = 0;
@@ -335,6 +387,7 @@ int TestLogging()
 	totalFailures += TestCheckMacros();
 	totalFailures += TestTeeLogger();
 	totalFailures += TestBackgroundLogger();
+	totalFailures += TestBackgroundLoggerConcurrency();
 
 	return totalFailures;
 }

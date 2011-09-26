@@ -150,17 +150,15 @@ namespace cpplog
 
 		// Constructor that initializes our stream.
 		LogData(loglevel_t logLevel)
-			: stream(buffer, k_logBufferSize), level(logLevel), f_deleteMessage(true)
+			: stream(buffer, k_logBufferSize), level(logLevel)
 #ifndef CPPLOG_NO_SYSTEM_IDS
 			  , processId(0), threadId(0)
 #endif
 		{
 		}
 
-		// Flag controlling whether this log data is deleted.
-		// This could be useful, for example, if we have some sort of delayed
-		// queue that we push log messages on.
-		bool	f_deleteMessage;
+		virtual ~LogData()
+		{ }
 	};
 
 	// Base interface for a logger.
@@ -168,7 +166,9 @@ namespace cpplog
 	{
 	public:
 		// All loggers must provide an interface to log a message to.
-		virtual void sendLogMessage(LogData* logData) = 0;
+		// The return value of this function indicates whether to delete
+		// the log message.
+		virtual bool sendLogMessage(LogData* logData) = 0;
 
 		virtual ~BaseLogger() { }
 	};
@@ -180,6 +180,7 @@ namespace cpplog
 		BaseLogger*		m_logger;
 		LogData*		m_logData;
 		bool			m_flushed;
+		bool			m_deleteMessage;
 
 		// Flag for if a fatal message has been logged already.
 		// This prevents us from calling exit(), which calls something,
@@ -212,8 +213,10 @@ namespace cpplog
 		{
 			Flush();
 
-			if( m_logData->f_deleteMessage )
+			if( m_deleteMessage )
+			{
 				delete m_logData;
+			}
 		}
 
 		inline std::ostream& getStream()
@@ -226,6 +229,7 @@ namespace cpplog
 		{
 			m_logData = new LogData(logLevel);
 			m_flushed = false;
+			m_deleteMessage = false;
 
 			// Capture data.
 			m_logData->fullPath		= file;
@@ -257,7 +261,7 @@ namespace cpplog
 				m_logData->stream << '\0';
 
 				// Send the message, set flushed=true.
-				m_logger->sendLogMessage(m_logData);
+				m_deleteMessage = m_logger->sendLogMessage(m_logData);
 				m_flushed = true;
 
 				// If this is a fatal message...
@@ -315,7 +319,7 @@ namespace cpplog
 			: m_logStream(outStream)
 		{ }
 
-		virtual void sendLogMessage(LogData* logData)
+		virtual bool sendLogMessage(LogData* logData)
 		{
 			// Log process ID and thread ID.
 #ifndef CPPLOG_NO_SYSTEM_IDS
@@ -332,6 +336,8 @@ namespace cpplog
 						<< logData->buffer;
 
 			m_logStream	<< std::flush;
+
+			return true;
 		}
 
 		virtual ~OstreamLogger() { }
@@ -428,10 +434,14 @@ namespace cpplog
 				delete m_logger2;
 		}
 
-		virtual void sendLogMessage(LogData* logData)
+		virtual bool sendLogMessage(LogData* logData)
 		{
-			m_logger1->sendLogMessage(logData);
-			m_logger2->sendLogMessage(logData);
+			bool deleteMessage = true;
+
+			deleteMessage = deleteMessage && m_logger1->sendLogMessage(logData);
+			deleteMessage = deleteMessage && m_logger2->sendLogMessage(logData);
+
+			return deleteMessage;
 		}
 	};
 
@@ -508,13 +518,15 @@ namespace cpplog
 		void addLogger(BaseLogger* logger, bool owned)		{ m_loggers.push_back(LoggerInfo(logger, owned)); }
 		void addLogger(BaseLogger& logger, bool owned)		{ m_loggers.push_back(LoggerInfo(&logger, owned)); }
 
-		virtual void sendLogMessage(LogData* logData)
+		virtual bool sendLogMessage(LogData* logData)
 		{
+			bool deleteMessage = true;
+
 			for( std::vector<LoggerInfo>::iterator It = m_loggers.begin();
 				 It != m_loggers.end();
 				 It++ )
 			{
-				(*It).logger->sendLogMessage(logData);
+				deleteMessage = deleteMessage && (*It).logger->sendLogMessage(logData);
 			}
 		}
 	};
@@ -550,10 +562,12 @@ namespace cpplog
 				delete m_forwardTo;
 		}
 
-		virtual void sendLogMessage(LogData* logData)
+		virtual bool sendLogMessage(LogData* logData)
 		{
 			if( logData->level >= m_lowestLevelAllowed )
-				m_forwardTo->sendLogMessage(logData);
+				return m_forwardTo->sendLogMessage(logData);
+			else
+				return true;
 		}
 	};
 
@@ -572,15 +586,17 @@ namespace cpplog
 		void backgroundFunction()
 		{
 			LogData* nextLogEntry;
+			bool deleteMessage;
 
 			do
 			{
 				m_queue.wait_and_pop(nextLogEntry);
 
 				if( nextLogEntry != m_dummyItem )
-					m_forwardTo->sendLogMessage(nextLogEntry);
+					deleteMessage = m_forwardTo->sendLogMessage(nextLogEntry);
 
-				delete nextLogEntry;
+				if( deleteMessage )
+					delete nextLogEntry;
 			} while( nextLogEntry != m_dummyItem );
 		}
 
@@ -617,10 +633,12 @@ namespace cpplog
 			// NOTE: The loop will free the dummy item for us, we can ignore it.
 		}
 
-		virtual void sendLogMessage(LogData* logData)
+		virtual bool sendLogMessage(LogData* logData)
 		{
-			logData->f_deleteMessage = false;
 			m_queue.push(logData);
+
+			// Don't delete - the background thread should handle this.
+			return false;
 		}
 
 	};
@@ -644,10 +662,12 @@ namespace cpplog
 				: m_forwardTo(forwardTo)
 			{ }
 
-			virtual void sendLogMessage(LogData* logData)
+			virtual bool sendLogMessage(LogData* logData)
 			{
 				if( logData->level >= lowestLevel )
-					m_forwardTo->sendLogMessage(logData);
+					return m_forwardTo->sendLogMessage(logData);
+				else
+					return true;
 			}
 		};
 
