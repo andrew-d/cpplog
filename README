@@ -1,3 +1,5 @@
 A simple, header-only C++ logging library.  Comes with a set of tests to ensure correct functionality.
 
+The layout of this library is based on Google's logging library (http://code.google.com/p/google-glog/), but does not use any code copied from that project.
+
 NOTE: Tests are relatively complete, but not exhaustive.  Please use at your own risk, and feel free to submit bug reports.
