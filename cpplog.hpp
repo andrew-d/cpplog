@@ -384,13 +384,13 @@ namespace cpplog
 
 	public:
 		FileLogger(std::string logFilePath)
-			: m_path(logFilePath), m_outStream(logFilePath, 'w'),
+			: m_path(logFilePath), m_outStream(logFilePath.c_str(), std::ios_base::out),
 			  OstreamLogger(m_outStream)
 		{
 		}
 
 		FileLogger(std::string logFilePath, bool append)
-			: m_path(logFilePath), m_outStream(logFilePath, append ? 'a' : 'w'),
+			: m_path(logFilePath), m_outStream(logFilePath.c_str(), append ? std::ios_base::app : std::ios_base::out),
 			  OstreamLogger(m_outStream)
 		{
 		}
