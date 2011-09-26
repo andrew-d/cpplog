@@ -5,18 +5,22 @@
 #include <sstream>
 #include <strstream>
 
+#ifndef CPPLOG_NO_SYSTEM_IDS
 #include <boost/interprocess/detail/os_thread_functions.hpp>
+using namespace boost::interprocess::detail;
+#endif
 
 #include "cpplog.hpp"
 
 using namespace cpplog;
-using namespace boost::interprocess::detail;
 using namespace std;
 
 // Helper function - gets the header string
-void getLogHeader(string& outString, loglevel_t level, char* file, unsigned int line)
+void getLogHeader(string& outString, loglevel_t level, const char* file, unsigned int line)
 {
 	ostringstream outStream;
+
+#ifndef CPPLOG_NO_SYSTEM_IDS
 	unsigned long processId	= get_current_process_id();
 	unsigned long threadId	= get_current_thread_id();
 
@@ -25,6 +29,7 @@ void getLogHeader(string& outString, loglevel_t level, char* file, unsigned int 
 			  << processId << "."
 			  << setfill('0') << setw(8) << hex 
 			  << threadId << "] ";
+#endif
 
 	outStream << setfill(' ') << setw(5) << left << dec 
 			  << LogMessage::getLevelName(level) << " - " 
@@ -297,6 +302,7 @@ int TestTeeLogger()
 	return failed;
 }
 
+#ifndef CPPLOG_NO_THREADING
 int TestBackgroundLogger()
 {
 	int failed = 0, line;
@@ -376,6 +382,7 @@ int TestBackgroundLoggerConcurrency()
 
 	return failed;
 }
+#endif // CPPLOG_NO_THREADING
 
 int TestLogging()
 {
@@ -386,8 +393,11 @@ int TestLogging()
 	totalFailures += TestConditionMacros();
 	totalFailures += TestCheckMacros();
 	totalFailures += TestTeeLogger();
+
+#ifndef CPPLOG_NO_THREADING
 	totalFailures += TestBackgroundLogger();
 	totalFailures += TestBackgroundLoggerConcurrency();
+#endif
 
 	return totalFailures;
 }
