@@ -16,7 +16,7 @@ using namespace cpplog;
 using namespace std;
 
 // Helper function - gets the header string
-void getLogHeader(string& outString, loglevel_t level, char* file, unsigned int line)
+void getLogHeader(string& outString, loglevel_t level, const char* file, unsigned int line)
 {
 	ostringstream outStream;
 

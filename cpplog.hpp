@@ -102,9 +102,9 @@ namespace cpplog
 	namespace helpers
 	{
 		// Gets the filename from a path.
-		inline static char* fileNameFromPath(char* filePath)
+		inline static const char* fileNameFromPath(const char* filePath)
 		{
-			char* fileName = strrchr(filePath, '/');
+			const char* fileName = strrchr(filePath, '/');
 #ifdef _WIN32
 			if( !fileName )
 				fileName = strrchr(filePath, '\\');
@@ -197,13 +197,13 @@ namespace cpplog
 		}
 
 	public:
-		LogMessage(char* file, unsigned int line, loglevel_t logLevel, BaseLogger* outputLogger)
+		LogMessage(const char* file, unsigned int line, loglevel_t logLevel, BaseLogger* outputLogger)
 			: m_logger(outputLogger)
 		{
 			Init(file, line, logLevel);
 		}
 
-		LogMessage(char* file, unsigned int line, loglevel_t logLevel, BaseLogger& outputLogger)
+		LogMessage(const char* file, unsigned int line, loglevel_t logLevel, BaseLogger& outputLogger)
 			: m_logger(&outputLogger)
 		{
 			Init(file, line, logLevel);
@@ -225,7 +225,7 @@ namespace cpplog
 		}
 
 	private:
-		void Init(char* file, unsigned int line, loglevel_t logLevel)
+		void Init(const char* file, unsigned int line, loglevel_t logLevel)
 		{
 			m_logData = new LogData(logLevel);
 			m_flushed = false;
@@ -285,7 +285,7 @@ namespace cpplog
 		}
 
 	public:
-		static char* getLevelName(loglevel_t level)
+		static const char* getLevelName(loglevel_t level)
 		{
 			switch( level )
 			{
