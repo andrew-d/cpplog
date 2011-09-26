@@ -8,6 +8,7 @@
 #include <string>
 #include <strstream>
 #include <fstream>
+#include <cstring>
 #include <ctime>
 #include <vector>
 
@@ -102,9 +103,9 @@ namespace cpplog
 	namespace helpers
 	{
 		// Gets the filename from a path.
-		inline static char* fileNameFromPath(char* filePath)
+		inline static const char* fileNameFromPath(const char* filePath)
 		{
-			char* fileName = strrchr(filePath, '/');
+			const char* fileName = strrchr(filePath, '/');
 #ifdef _WIN32
 			if( !fileName )
 				fileName = strrchr(filePath, '\\');
@@ -197,13 +198,13 @@ namespace cpplog
 		}
 
 	public:
-		LogMessage(char* file, unsigned int line, loglevel_t logLevel, BaseLogger* outputLogger)
+		LogMessage(const char* file, unsigned int line, loglevel_t logLevel, BaseLogger* outputLogger)
 			: m_logger(outputLogger)
 		{
 			Init(file, line, logLevel);
 		}
 
-		LogMessage(char* file, unsigned int line, loglevel_t logLevel, BaseLogger& outputLogger)
+		LogMessage(const char* file, unsigned int line, loglevel_t logLevel, BaseLogger& outputLogger)
 			: m_logger(&outputLogger)
 		{
 			Init(file, line, logLevel);
@@ -225,7 +226,7 @@ namespace cpplog
 		}
 
 	private:
-		void Init(char* file, unsigned int line, loglevel_t logLevel)
+		void Init(const char* file, unsigned int line, loglevel_t logLevel)
 		{
 			m_logData = new LogData(logLevel);
 			m_flushed = false;
@@ -285,7 +286,7 @@ namespace cpplog
 		}
 
 	public:
-		static char* getLevelName(loglevel_t level)
+		static const char* getLevelName(loglevel_t level)
 		{
 			switch( level )
 			{
@@ -383,13 +384,13 @@ namespace cpplog
 
 	public:
 		FileLogger(std::string logFilePath)
-			: m_path(logFilePath), m_outStream(logFilePath, 'w'),
+			: m_path(logFilePath), m_outStream(logFilePath.c_str(), std::ios_base::out),
 			  OstreamLogger(m_outStream)
 		{
 		}
 
 		FileLogger(std::string logFilePath, bool append)
-			: m_path(logFilePath), m_outStream(logFilePath, append ? 'a' : 'w'),
+			: m_path(logFilePath), m_outStream(logFilePath.c_str(), append ? std::ios_base::app : std::ios_base::out),
 			  OstreamLogger(m_outStream)
 		{
 		}
@@ -528,6 +529,8 @@ namespace cpplog
 			{
 				deleteMessage = deleteMessage && (*It).logger->sendLogMessage(logData);
 			}
+
+			return deleteMessage;
 		}
 	};
 
@@ -725,11 +728,11 @@ namespace cpplog
 #define DLOG_WARN(logger)	LOG_WARN(logger)
 #define DLOG_ERROR(logger)	LOG_ERROR(logger)
 #else
-#define DLOG_TRACE(logger)	LOG_NOTHING(logger, LL_TRACE)
-#define DLOG_DEBUG(logger)	LOG_NOTHING(logger, LL_DEBUG)
-#define DLOG_INFO(logger)	LOG_NOTHING(logger, LL_INFO)
-#define DLOG_WARN(logger)	LOG_NOTHING(logger, LL_WARN)
-#define DLOG_ERROR(logger)	LOG_NOTHING(logger, LL_ERROR)
+#define DLOG_TRACE(logger)	LOG_NOTHING(LL_TRACE, logger)
+#define DLOG_DEBUG(logger)	LOG_NOTHING(LL_DEBUG, logger)
+#define DLOG_INFO(logger)	LOG_NOTHING(LL_INFO,  logger)
+#define DLOG_WARN(logger)	LOG_NOTHING(LL_WARN,  logger)
+#define DLOG_ERROR(logger)	LOG_NOTHING(LL_ERROR, logger)
 #endif
 
 // Note: Always logged.
