@@ -728,11 +728,11 @@ namespace cpplog
 #define DLOG_WARN(logger)	LOG_WARN(logger)
 #define DLOG_ERROR(logger)	LOG_ERROR(logger)
 #else
-#define DLOG_TRACE(logger)	LOG_NOTHING(logger, LL_TRACE)
-#define DLOG_DEBUG(logger)	LOG_NOTHING(logger, LL_DEBUG)
-#define DLOG_INFO(logger)	LOG_NOTHING(logger, LL_INFO)
-#define DLOG_WARN(logger)	LOG_NOTHING(logger, LL_WARN)
-#define DLOG_ERROR(logger)	LOG_NOTHING(logger, LL_ERROR)
+#define DLOG_TRACE(logger)	LOG_NOTHING(LL_TRACE, logger)
+#define DLOG_DEBUG(logger)	LOG_NOTHING(LL_DEBUG, logger)
+#define DLOG_INFO(logger)	LOG_NOTHING(LL_INFO,  logger)
+#define DLOG_WARN(logger)	LOG_NOTHING(LL_WARN,  logger)
+#define DLOG_ERROR(logger)	LOG_NOTHING(LL_ERROR, logger)
 #endif
 
 // Note: Always logged.
