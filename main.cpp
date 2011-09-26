@@ -351,7 +351,7 @@ int TestBackgroundLoggerConcurrency()
 {
 	int failed = 0;
 	CountingLogger clog;
-	const int numMessages = 10000;
+	const int numMessages = 100000;
 
 	cout << "Testing BackgroundLogger for consistency... " << flush;
 
