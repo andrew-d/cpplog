@@ -11,15 +11,16 @@
 #include <ctime>
 #include <vector>
 
-#include <boost/thread.hpp>
-#include "concurrent_queue.hpp"
-
 // The following #define's will change the behaviour of this library.
 //		#define CPPLOG_FILTER_LEVEL		<level>
 //			Prevents all log messages with level less than <level> from being emitted.
 //
 //		#define CPPLOG_NO_SYSTEM_IDS
 //			Disables capturing of the Process and Thread ID.
+//
+//		#define CPPLOG_NO_THREADING
+//			Disables threading (BackgroundLogger).  Note that this means that the library
+//			is truly header-only, as it no longer depends on Boost.
 //
 //		#define CPPLOG_NO_HELPER_MACROS
 //			Disables inclusion of the CHECK_* macros.
@@ -55,6 +56,7 @@
 
 //#define CPPLOG_FILTER_LEVEL				LL_WARN
 //#define CPPLOG_NO_SYSTEM_IDS
+//#define CPPLOG_NO_THREADING
 //#define CPPLOG_NO_HELPER_MACROS
 //#define CPPLOG_FATAL_NOEXIT
 
@@ -65,6 +67,11 @@
 
 #ifndef CPPLOG_NO_SYSTEM_IDS
 #include <boost/interprocess/detail/os_thread_functions.hpp>
+#endif
+
+#ifndef CPPLOG_NO_THREADING
+#include <boost/thread.hpp>
+#include "concurrent_queue.hpp"
 #endif
 
 // If we don't have a level defined, set it to CPPLOG_LEVEL_DEBUG (log all except trace statements)
@@ -162,6 +169,8 @@ namespace cpplog
 	public:
 		// All loggers must provide an interface to log a message to.
 		virtual void sendLogMessage(LogData* logData) = 0;
+
+		virtual ~BaseLogger() { }
 	};
 
 	// Log message - this is instantiated upon every call to LOG(logger)
@@ -325,6 +334,7 @@ namespace cpplog
 			m_logStream	<< std::flush;
 		}
 
+		virtual ~OstreamLogger() { }
 	};
 	
 	// Simple implementation - logs to stderr.
@@ -515,15 +525,30 @@ namespace cpplog
 	private:
 		loglevel_t		m_lowestLevelAllowed;
 		BaseLogger*		m_forwardTo;
+		bool			m_owned;
 
 	public:
 		FilteringLogger(loglevel_t level, BaseLogger* forwardTo)
-			: m_lowestLevelAllowed(level), m_forwardTo(forwardTo)
+			: m_lowestLevelAllowed(level), m_forwardTo(forwardTo), m_owned(false)
 		{ }
 
 		FilteringLogger(loglevel_t level, BaseLogger& forwardTo)
-			: m_lowestLevelAllowed(level), m_forwardTo(&forwardTo)
+			: m_lowestLevelAllowed(level), m_forwardTo(&forwardTo), m_owned(false)
 		{ }
+
+		FilteringLogger(loglevel_t level, BaseLogger* forwardTo, bool owned)
+			: m_lowestLevelAllowed(level), m_forwardTo(forwardTo), m_owned(owned)
+		{ }
+
+		FilteringLogger(loglevel_t level, BaseLogger& forwardTo, bool owned)
+			: m_lowestLevelAllowed(level), m_forwardTo(&forwardTo), m_owned(owned)
+		{ }
+
+		~FilteringLogger()
+		{
+			if( m_owned )
+				delete m_forwardTo;
+		}
 
 		virtual void sendLogMessage(LogData* logData)
 		{
@@ -532,7 +557,9 @@ namespace cpplog
 		}
 	};
 
-	// Logger that moves all processing of log messages to a background thread.
+	// Logger that moves all processing of log messages to a background thread. 
+	// Only include if we have support for threading.
+#ifndef CPPLOG_NO_THREADING
 	class BackgroundLogger : public BaseLogger
 	{
 	private:
@@ -597,6 +624,8 @@ namespace cpplog
 		}
 
 	};
+
+#endif //CPPLOG_NO_THREADING
 
 	// Seperate namespace for loggers that use templates.
 	namespace templated
