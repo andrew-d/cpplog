@@ -335,7 +335,7 @@ public:
 		: m_logMessageCount(0)
 	{ }
 
-	virtual bool sendLogMessage(LogData* logData)
+	virtual bool sendLogMessage(LogData* /* logData */)
 	{
 		m_logMessageCount++;
 		return true;

@@ -586,7 +586,7 @@ namespace cpplog
 		void backgroundFunction()
 		{
 			LogData* nextLogEntry;
-			bool deleteMessage;
+			bool deleteMessage = true;
 
 			do
 			{
