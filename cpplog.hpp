@@ -8,6 +8,7 @@
 #include <string>
 #include <strstream>
 #include <fstream>
+#include <cstring>
 #include <ctime>
 #include <vector>
 
