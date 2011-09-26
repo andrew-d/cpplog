@@ -529,6 +529,8 @@ namespace cpplog
 			{
 				deleteMessage = deleteMessage && (*It).logger->sendLogMessage(logData);
 			}
+
+			return deleteMessage;
 		}
 	};
 
