@@ -20,8 +20,9 @@
 //			Disables capturing of the Process and Thread ID.
 //
 //		#define CPPLOG_NO_THREADING
-//			Disables threading (BackgroundLogger).  Note that this means that the library
-//			is truly header-only, as it no longer depends on Boost.
+//			Disables threading (BackgroundLogger).  Note that defining this and 
+//			CPPLOG_NO_SYSTEM_IDS means that the library is truly header-only, 
+//			as it no longer depends on Boost.
 //
 //		#define CPPLOG_NO_HELPER_MACROS
 //			Disables inclusion of the CHECK_* macros.
@@ -295,7 +296,7 @@ namespace cpplog
 				case LL_DEBUG:
 					return "DEBUG";
 				case LL_INFO:
-					return "WARN";
+					return "INFO";
 				case LL_WARN:
 					return "WARN";
 				case LL_ERROR:
