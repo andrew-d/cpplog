@@ -772,9 +772,9 @@ namespace cpplog
 #define DLOG_IF_NOT(level, logger, condition)	!!(condition) ? (void)0 : cpplog::helpers::VoidStreamClass() & LOG_##level(logger)
 #else
 #define DLOG_IF(level, logger, condition)		(true || !(condition)) ? (void)0 : \
-													cpplog::VoidStreamClass() & LOG_##level(logger)
-#define DLOG_IF(level, logger, condition)		(true || !!(condition)) ? (void)0 : \
-													cpplog::VoidStreamClass() & LOG_##level(logger)
+													cpplog::helpers::VoidStreamClass() & LOG_##level(logger)
+#define DLOG_IF_NOT(level, logger, condition)		(true || !!(condition)) ? (void)0 : \
+													cpplog::helpers::VoidStreamClass() & LOG_##level(logger)
 #endif
 
 
