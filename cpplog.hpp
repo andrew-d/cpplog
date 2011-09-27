@@ -741,43 +741,46 @@ namespace cpplog
 
 // Aliases - so we can do:
 //		LOG(LL_FATAL, logger)
-#define LOG_LL_TRACE	LOG_TRACE
-#define LOG_LL_DEBUG	LOG_DEBUG
-#define LOG_LL_INFO		LOG_INFO
-#define LOG_LL_WARN		LOG_WARN
-#define LOG_LL_ERROR	LOG_ERROR
-#define LOG_LL_FATAL	LOG_FATAL
+#define LOG_LL_TRACE(logger)	LOG_TRACE(logger)
+#define LOG_LL_DEBUG(logger)	LOG_DEBUG(logger)
+#define LOG_LL_INFO(logger)		LOG_INFO(logger)
+#define LOG_LL_WARN(logger)		LOG_WARN(logger)
+#define LOG_LL_ERROR(logger)	LOG_ERROR(logger)
+#define LOG_LL_FATAL(logger)	LOG_FATAL(logger)
 
-#define DLOG_LL_TRACE	DLOG_TRACE
-#define DLOG_LL_DEBUG	DLOG_DEBUG
-#define DLOG_LL_INFO	DLOG_INFO
-#define DLOG_LL_WARN	DLOG_WARN
-#define DLOG_LL_ERROR	DLOG_ERROR
-#define DLOG_LL_FATAL	DLOG_FATAL
+#define DLOG_LL_TRACE(logger)	DLOG_TRACE(logger)
+#define DLOG_LL_DEBUG(logger)	DLOG_DEBUG(logger)
+#define DLOG_LL_INFO(logger)	DLOG_INFO(logger)
+#define DLOG_LL_WARN(logger)	DLOG_WARN(logger)
+#define DLOG_LL_ERROR(logger)	DLOG_ERROR(logger)
+#define DLOG_LL_FATAL(logger)	DLOG_FATAL(logger)
 
 
 // Helper - if you want to do:
-//		LOG(FATAL, logger)
+//		LOG(LL_FATAL, logger)
 #define LOG(level, logger)	LOG_##level(logger)
 #define DLOG(level, logger)	DLOG_##level(logger)
 
 
 // Log conditions.
-#define LOG_IF(level, logger, condition)		!(condition) ? (void)0 : cpplog::helpers::VoidStreamClass() & LOG(##level, logger)
-#define LOG_IF_NOT(level, logger, condition)	LOG_IF(##level, logger, !(condition))
+#define LOG_IF(level, logger, condition)		!(condition) ? (void)0 : cpplog::helpers::VoidStreamClass() & LOG_##level(logger)
+#define LOG_IF_NOT(level, logger, condition)	!!(condition) ? (void)0 : cpplog::helpers::VoidStreamClass() & LOG_##level(logger)
 
 // Debug conditions.
 #ifdef _DEBUG
-#define DLOG_IF(level, logger, condition)		!(condition) ? (void)0 : cpplog::helpers::VoidStreamClass() & LOG(level, logger)
+#define DLOG_IF(level, logger, condition)		!(condition) ? (void)0 : cpplog::helpers::VoidStreamClass() & LOG_##level(logger)
+#define DLOG_IF_NOT(level, logger, condition)	!!(condition) ? (void)0 : cpplog::helpers::VoidStreamClass() & LOG_##level(logger)
 #else
 #define DLOG_IF(level, logger, condition)		(true || !(condition)) ? (void)0 : \
-													cpplog::VoidStreamClass() & LOG(level, logger)
+													cpplog::VoidStreamClass() & LOG_##level(logger)
+#define DLOG_IF(level, logger, condition)		(true || !!(condition)) ? (void)0 : \
+													cpplog::VoidStreamClass() & LOG_##level(logger)
 #endif
-#define DLOG_IF_NOT(level, logger, condition)	DLOG_IF(level, logger, !(condition))
+
 
 // Assertion helpers.
-#define LOG_ASSERT(logger, condition)			LOG_IF(LL_FATAL, logger, !(condition)) << "Assertion failed: " #condition
-#define DLOG_ASSERT(logger, condition)			DLOG_IF(LL_FATAL, logger, !(condition)) << "Assertion failed: " #condition
+#define LOG_ASSERT(logger, condition)			LOG_IF_NOT(LL_FATAL, logger, (condition)) << "Assertion failed: " #condition
+#define DLOG_ASSERT(logger, condition)			DLOG_IF_NOT(LL_FATAL, logger, (condition)) << "Assertion failed: " #condition
 
 
 // Only include further helper macros if we are supposed to.
@@ -786,7 +789,7 @@ namespace cpplog
 // The following CHECK_* functions act similar to a LOG_ASSERT, but with a bit more
 // readability.
 
-#define __CHECK(logger, condition, print)	LOG_IF(LL_FATAL, logger, !(condition)) << "Check failed: " ## print ## ": "
+#define __CHECK(logger, condition, print)	LOG_IF(LL_FATAL, logger, !(condition)) << "Check failed: " print ": "
 
 #define CHECK(logger, condition)			__CHECK(logger, condition, #condition)
 
