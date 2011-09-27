@@ -22,7 +22,7 @@ void getLogHeader(string& outString, loglevel_t level, const char* file, unsigne
 
 #ifndef CPPLOG_NO_SYSTEM_IDS
 	unsigned long processId	= get_current_process_id();
-	unsigned long threadId	= get_current_thread_id();
+	unsigned long threadId	= (unsigned long)get_current_thread_id();
 
 	outStream << "[" 
 			  << right << setfill('0') << setw(8) << hex 

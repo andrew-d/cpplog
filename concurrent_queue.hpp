@@ -22,7 +22,7 @@ public:
 
     bool empty() const
     {
-        boost::lock_guard lock(the_mutex);
+        boost::lock_guard<boost::mutex> lock(the_mutex);
         return the_queue.empty();
     }
 
