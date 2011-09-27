@@ -5,12 +5,12 @@
 #include <sstream>
 #include <strstream>
 
+#include "cpplog.hpp"
+
 #ifndef CPPLOG_NO_SYSTEM_IDS
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 using namespace boost::interprocess::detail;
 #endif
-
-#include "cpplog.hpp"
 
 using namespace cpplog;
 using namespace std;
@@ -212,7 +212,6 @@ int TestCheckMacros()
 						 << "(" << __LINE__ << ")" << endl;												\
 					failed++;																			\
 				}																						\
-				log.clear();																			\
 			} else																						\
 			{																							\
 				if( log.getString().length() > 0 )														\
@@ -221,7 +220,8 @@ int TestCheckMacros()
 						 << "(" << __LINE__ << ")" << endl;												\
 					failed++;																			\
 				}																						\
-			}
+			}																							\
+			log.clear();																				
 
 
 	CHECK(log, 1 == 1) << "Should not log"; TEST_EXPECTED(false);
@@ -384,6 +384,48 @@ int TestBackgroundLoggerConcurrency()
 }
 #endif // CPPLOG_NO_THREADING
 
+int TestOtherLogging()
+{
+	int failed = 0;
+	StringLogger log;
+#ifdef _DEBUG
+	bool debug = true;
+#else
+	bool debug = false;
+#endif 
+
+	cout << "Testing other logging macros...";
+
+#define TEST_EXPECTED(logged)																			\
+			if( logged )																				\
+			{																							\
+				if( log.getString().find("Assertion failed: ") == string::npos )							\
+				{																						\
+					cerr << "Mismatch detected at " << cpplog::helpers::fileNameFromPath(__FILE__)		\
+						 << "(" << __LINE__ << ")" << endl;												\
+					failed++;																			\
+				}																						\
+			} else																						\
+			{																							\
+				if( log.getString().length() > 0 )														\
+				{																						\
+					cerr << "Mismatch detected at " << cpplog::helpers::fileNameFromPath(__FILE__)		\
+						 << "(" << __LINE__ << ")" << endl;												\
+					failed++;																			\
+				}																						\
+			}																							\
+			log.clear();																				
+
+	LOG_ASSERT(log, 1 == 1);	TEST_EXPECTED(false);
+	LOG_ASSERT(log, 1 == 2);	TEST_EXPECTED(true);
+
+	DLOG_ASSERT(log, 1 == 1);	TEST_EXPECTED(false);
+	DLOG_ASSERT(log, 1 == 2);	TEST_EXPECTED(true && debug);
+
+	cout << "done!" << endl;
+	return failed;
+}
+
 int TestLogging()
 {
 	int totalFailures = 0;
@@ -393,6 +435,7 @@ int TestLogging()
 	totalFailures += TestConditionMacros();
 	totalFailures += TestCheckMacros();
 	totalFailures += TestTeeLogger();
+	totalFailures += TestOtherLogging();
 
 #ifndef CPPLOG_NO_THREADING
 	totalFailures += TestBackgroundLogger();
