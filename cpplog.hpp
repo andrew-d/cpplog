@@ -12,10 +12,6 @@
 #include <ctime>
 #include <vector>
 
-#ifdef _WIN32
-#include "outputdebugstream.hpp"
-#endif
-
 // The following #define's will change the behaviour of this library.
 //		#define CPPLOG_FILTER_LEVEL		<level>
 //			Prevents all log messages with level less than <level> from being emitted.
@@ -78,6 +74,10 @@
 #ifndef CPPLOG_NO_THREADING
 #include <boost/thread.hpp>
 #include "concurrent_queue.hpp"
+#endif
+
+#ifdef _WIN32
+#include "outputdebugstream.hpp"
 #endif
 
 // If we don't have a level defined, set it to CPPLOG_LEVEL_DEBUG (log all except trace statements)
