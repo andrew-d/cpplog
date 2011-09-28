@@ -262,12 +262,18 @@ namespace cpplog
 				// Null-terminate.
 				m_logData->stream << '\0';
 
+				// Save the log level.
+				loglevel_t savedLogLevel = m_logData->level;
+
 				// Send the message, set flushed=true.
 				m_deleteMessage = m_logger->sendLogMessage(m_logData);
 				m_flushed = true;
 
+				// Note: We cannot touch m_logData after the above call.  By the 
+				// time it returns, we have to assume it has already been freed.
+
 				// If this is a fatal message...
-				if( m_logData->level == LL_FATAL && !getSetFatal(true, true) )
+				if( savedLogLevel == LL_FATAL && !getSetFatal(true, true) )
 				{
 					// Set our fatal flag.
 					getSetFatal(false, true);
