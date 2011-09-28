@@ -13,7 +13,7 @@
 #include <vector>
 
 #ifdef _WIN32
-#include "outputdebugstram.hpp"
+#include "outputdebugstream.hpp"
 #endif
 
 // The following #define's will change the behaviour of this library.
