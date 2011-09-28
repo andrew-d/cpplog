@@ -12,6 +12,7 @@
 #include <ctime>
 #include <vector>
 
+
 // The following #define's will change the behaviour of this library.
 //		#define CPPLOG_FILTER_LEVEL		<level>
 //			Prevents all log messages with level less than <level> from being emitted.
@@ -316,14 +317,15 @@ namespace cpplog
 
 	};
 
-	// Generic class - logs to a given std::ostream.
+	// Generic class - logs to a given class derived from std::ostream.
+	template <class T>
 	class OstreamLogger : public BaseLogger
 	{
 	private:
-		std::ostream&	m_logStream;
+		T&	m_logStream;
 
 	public:
-		OstreamLogger(std::ostream& outStream)
+		OstreamLogger(T& outStream)
 			: m_logStream(outStream)
 		{ }
 
@@ -352,22 +354,22 @@ namespace cpplog
 	};
 	
 	// Simple implementation - logs to stderr.
-	class StdErrLogger : public OstreamLogger
+	class StdErrLogger : public OstreamLogger<std::ostream>
 	{
 	public:
 		StdErrLogger()
-			: OstreamLogger(std::cerr)
+			: OstreamLogger<std::ostream>(std::cerr)
 		{ }
 	};
 
 	// Simple implementation - logs to a string, provides the ability to get that string.
-	class StringLogger : public OstreamLogger
+	class StringLogger : public OstreamLogger<std::ostringstream>
 	{
 	private:
 		std::ostringstream	m_stream;
 	public:
 		StringLogger()
-			: OstreamLogger(m_stream)
+			: OstreamLogger<std::ostringstream>(m_stream)
 		{ }
 
 		std::string getString()
@@ -383,7 +385,7 @@ namespace cpplog
 	};
 
 	// Log to file.
-	class FileLogger : public OstreamLogger
+	class FileLogger : public OstreamLogger<std::ofstream>
 	{
 	private:
 		std::string		m_path;
@@ -392,13 +394,13 @@ namespace cpplog
 	public:
 		FileLogger(std::string logFilePath)
 			: m_path(logFilePath), m_outStream(logFilePath.c_str(), std::ios_base::out),
-			  OstreamLogger(m_outStream)
+			  OstreamLogger<std::ofstream>(m_outStream)
 		{
 		}
 
 		FileLogger(std::string logFilePath, bool append)
 			: m_path(logFilePath), m_outStream(logFilePath.c_str(), append ? std::ios_base::app : std::ios_base::out),
-			  OstreamLogger(m_outStream)
+			  OstreamLogger<std::ofstream>(m_outStream)
 		{
 		}
 	};
