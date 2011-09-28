@@ -12,6 +12,10 @@
 #include <ctime>
 #include <vector>
 
+#ifdef _WIN32
+#include "outputdebugstram.hpp"
+#endif
+
 // The following #define's will change the behaviour of this library.
 //		#define CPPLOG_FILTER_LEVEL		<level>
 //			Prevents all log messages with level less than <level> from being emitted.
@@ -381,6 +385,17 @@ namespace cpplog
 			m_stream.clear();
 		}
 	};
+
+#ifdef _WIN32
+	class OutputDebugStringLogger : public OstreamLogger
+	{
+	private:
+		dbgwin_stream m_stream;
+	public:
+		OutputDebugStringLogger() : OstreamLogger(m_stream)
+		{ }
+	};
+#endif
 
 	// Log to file.
 	class FileLogger : public OstreamLogger
