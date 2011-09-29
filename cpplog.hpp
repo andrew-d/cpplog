@@ -16,6 +16,10 @@
 #include "outputdebugstream.hpp"
 #endif
 
+#ifdef WITH_SCRIBE_LOGGER
+#include "scribestream.hpp"
+#endif
+
 // The following #define's will change the behaviour of this library.
 //		#define CPPLOG_FILTER_LEVEL		<level>
 //			Prevents all log messages with level less than <level> from being emitted.
@@ -417,6 +421,20 @@ namespace cpplog
 		{
 		}
 	};
+
+#ifdef WITH_SCRIBE_LOGGER
+    class ScribeLogger : public OstreamLogger
+    {
+    private:
+        scribe_stream m_outStream;
+    public:
+        ScribeLogger(std::string host, unsigned short port, std::string category, int timeout)
+            : OstreamLogger(m_outStream)
+        {
+            m_outStream.open(host, port, category, timeout);
+        }
+    };
+#endif
 
 	// Tee logger - given two loggers, will forward a message to both.
 	class TeeLogger : public BaseLogger
