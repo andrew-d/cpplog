@@ -12,11 +12,6 @@
 #include <ctime>
 #include <vector>
 
-// If we don't have a level defined, set it to CPPLOG_LEVEL_DEBUG (log all except trace statements)
-#ifndef CPPLOG_FILTER_LEVEL
-#define CPPLOG_FILTER_LEVEL LL_DEBUG
-#endif 
-
 // The following #define's will change the behaviour of this library.
 //		#define CPPLOG_FILTER_LEVEL		<level>
 //			Prevents all log messages with level less than <level> from being emitted.
@@ -89,6 +84,11 @@
 #include "scribestream.hpp"
 #endif
 
+// If we don't have a level defined, set it to CPPLOG_LEVEL_DEBUG (log all except trace statements)
+#ifndef CPPLOG_FILTER_LEVEL
+#define CPPLOG_FILTER_LEVEL LL_DEBUG
+#endif 
+
 
 // The general concept for how logging works:
 //	- Every call to LOG(LEVEL, logger) works as follows:
@@ -120,6 +120,26 @@ namespace cpplog
 				fileName = strrchr(filePath, '\\');
 #endif
 			return fileName ? fileName + 1 : filePath;
+		}
+
+		// Thread-safe version of localtime()
+		bool slocaltime(::tm* out, const ::time_t* in)
+		{
+#ifdef _WIN32
+			return ::localtime_s(out, in) == 0;
+#else
+			return ::localtime_r(in, out) != NULL;
+#endif
+		}
+
+		// Thread-safe version of gmtime()
+		bool sgmtime(::tm* out, const ::time_t* in)
+		{
+#ifdef _WIN32
+			return ::gmtime_s(out, in) == 0;
+#else
+			return ::gmtime_r(in, out) != NULL;
+#endif
 		}
 
 		// Simple class that allows us to evaluate a stream to void - prevents compiler errors.
@@ -419,6 +439,155 @@ namespace cpplog
 			: m_path(logFilePath), m_outStream(logFilePath.c_str(), append ? std::ios_base::app : std::ios_base::out),
 			  OstreamLogger(m_outStream)
 		{
+		}
+	};
+
+	// Log to file, rotate when the log reaches a given size.
+	class SizeRotateFileLogger : public OstreamLogger
+	{
+	public:
+		typedef void (*pfBuildFileName)(unsigned long logNumber, std::string& newFileName, void* context);
+
+	private:
+		size_t			m_maxSize;
+		unsigned long	m_logNumber;
+
+		SizeRotateFileLogger::pfBuildFileName m_buildFunc;
+		void*			m_context;
+
+		std::ofstream	m_outStream;
+
+	public:
+		SizeRotateFileLogger(pfBuildFileName nameFunc, size_t maxSize)
+			: m_maxSize(maxSize), m_logNumber(0),
+			  m_buildFunc(nameFunc), m_context(NULL), 
+			  m_outStream(), OstreamLogger(m_outStream)
+		{
+			// "Rotate" to open our initial log.
+			RotateLog();
+		}
+
+		SizeRotateFileLogger(pfBuildFileName nameFunc, void* context, size_t maxSize)
+			: m_maxSize(maxSize), m_logNumber(0),
+			  m_buildFunc(nameFunc), m_context(context), 
+			  m_outStream(), OstreamLogger(m_outStream)
+		{
+			// "Rotate" to open our initial log.
+			RotateLog();
+		}
+
+		virtual ~SizeRotateFileLogger()
+		{ }
+
+		virtual bool sendLogMessage(LogData* logData)
+		{
+			// Call the actual logger.
+			bool deleteMessage = OstreamLogger::sendLogMessage(logData);
+
+			// Check if we're over our limit.
+			if( m_outStream.tellp() > m_maxSize )
+			{
+				// Yep, increment our log number and rotate.
+				m_logNumber++;
+				m_outStream << std::flush;
+
+				RotateLog();
+			}
+
+			return deleteMessage;
+		}
+
+
+	private:
+		void RotateLog()
+		{
+			// Build the file name.
+			std::string newFileName;
+			m_buildFunc(m_logNumber, newFileName, m_context);
+
+			// Close old file, open new file.
+			m_outStream.close();
+			m_outStream.open(newFileName.c_str(), std::ios_base::out);
+		}
+	};
+
+	// Log to file, rotate every "x" seconds.
+	class TimeRotateFileLogger : public OstreamLogger
+	{
+	public:
+		typedef void (*pfBuildFileName)(::tm* time, unsigned long logNumber, 
+										std::string& newFileName, void* context);
+
+	private:
+		unsigned long	m_rotateInterval;
+		::time_t		m_lastRotateTime;
+		unsigned long	m_logNumber;
+
+		cpplog::TimeRotateFileLogger::pfBuildFileName m_buildFunc;
+		void* m_context;
+
+		std::ofstream	m_outStream;
+
+	public:
+		TimeRotateFileLogger(pfBuildFileName nameFunc, unsigned long intervalSeconds)
+			: m_logNumber(0), m_rotateInterval(intervalSeconds),
+			  m_buildFunc(nameFunc), m_context(NULL),
+			  OstreamLogger(m_outStream)
+		{
+			// "Rotate" to open our initial log.
+			RotateLog(::time(NULL));
+		}
+
+		TimeRotateFileLogger(pfBuildFileName nameFunc, void* context, unsigned long intervalSeconds)
+			: m_logNumber(0), m_rotateInterval(intervalSeconds),
+			  m_buildFunc(nameFunc), m_context(context),
+			  OstreamLogger(m_outStream)
+		{
+			// "Rotate" to open our initial log.
+			RotateLog(::time(NULL));
+		}
+
+		virtual ~TimeRotateFileLogger()
+		{
+		}
+
+		virtual bool sendLogMessage(LogData* logData)
+		{
+			// Get the current time.
+			::time_t currTime;
+			::time(&currTime);
+
+			// Is the difference greater than our number of seconds?
+			if( (unsigned long)difftime(currTime, m_lastRotateTime) > m_rotateInterval )
+			{
+				// Yep, increment our log number and rotate.
+				m_logNumber++;
+				m_outStream << std::flush;
+
+				RotateLog(currTime);
+			}
+
+			// Call the actual logger.
+			return OstreamLogger::sendLogMessage(logData);
+		}
+
+	private:
+		void RotateLog(time_t currTime)
+		{
+			// Get the current time.
+			::tm timeInfo;
+			cpplog::helpers::slocaltime(&timeInfo, &currTime);
+
+			// Build a new file name.
+			std::string newFileName;
+			m_buildFunc(&timeInfo, m_logNumber, newFileName, m_context);
+
+			// Close old file, open new file.
+			m_outStream.close();
+			m_outStream.open(newFileName.c_str(), std::ios_base::out);
+
+			// Reset the rotate time.
+			::time(&m_lastRotateTime);
 		}
 	};
 

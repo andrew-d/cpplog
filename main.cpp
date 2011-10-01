@@ -384,6 +384,83 @@ int TestBackgroundLoggerConcurrency()
 }
 #endif // CPPLOG_NO_THREADING
 
+void SizeNameFunc(unsigned long logNumber, std::string& newFileName, void* context)
+{
+	std::ostringstream fileName;
+
+	fileName << "SizeRotateFileLogger_test_" << logNumber << ".log";
+
+	newFileName = fileName.str();
+}
+
+void TimeNameFunc(::tm* time, unsigned long logNumber, 
+				  std::string& newFileName, void* context)
+{
+	std::ostringstream fileName;
+
+	fileName << "TimeRotateFileLogger_test_";
+
+	fileName << setfill('0');
+	
+	fileName << setw(4) << (time->tm_year + 1900) << "-"
+		     << setw(2) << time->tm_mon			  << "-"
+			 << setw(2) << time->tm_mday
+			 << "_"
+			 << setw(2) << time->tm_hour << "-"
+			 << setw(2) << time->tm_min  << "-"
+			 << setw(2) << time->tm_sec
+			 << ".log";
+
+	newFileName = fileName.str();
+}
+
+int TestRotatingLoggers()
+{
+	int failed = 0;
+
+	cout << "Testing auto-rotating loggers... ";
+
+	// We rotate at 100 bytes.
+	cpplog::SizeRotateFileLogger srlog(SizeNameFunc, 200);
+
+	// Log two messages...
+	LOG_INFO(srlog) << "Size rotated 1";
+	LOG_INFO(srlog) << "Size rotated 2";
+
+	// ... and force a rotation.
+	LOG_INFO(srlog) << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";		// 200 * 'a'
+
+	// Log to the new file.
+	LOG_INFO(srlog) << "After size rotation 1";
+	LOG_INFO(srlog) << "After size rotation 2";
+
+	// Rotate every 10 seconds.
+	cpplog::TimeRotateFileLogger trlog(TimeNameFunc, 10);
+
+	// Log two messages...
+	LOG_INFO(trlog) << "Time rotated 1";
+	LOG_INFO(trlog) << "Time rotated 2";
+
+	// ... and wait for 11 seconds (to eliminate the rare edge case).
+	cout << "(waiting) " << flush;
+	time_t startTime = time(NULL);
+	while( difftime(time(NULL), startTime) < 11.0 )
+	{
+		;
+	}
+
+	// Log another two now.
+	LOG_WARN(trlog) << "After rotation 1";
+	LOG_WARN(trlog) << "After rotation 2";
+
+	// TODO: Verify that files exist with correct data.
+	cout << "done!" << endl;
+	return failed;
+}
+
 int TestOtherLogging()
 {
 	int failed = 0;
@@ -394,12 +471,12 @@ int TestOtherLogging()
 	bool debug = false;
 #endif 
 
-	cout << "Testing other logging macros...";
+	cout << "Testing other logging macros... ";
 
 #define TEST_EXPECTED(logged)																			\
 			if( logged )																				\
 			{																							\
-				if( log.getString().find("Assertion failed: ") == string::npos )							\
+				if( log.getString().find("Assertion failed: ") == string::npos )						\
 				{																						\
 					cerr << "Mismatch detected at " << cpplog::helpers::fileNameFromPath(__FILE__)		\
 						 << "(" << __LINE__ << ")" << endl;												\
@@ -422,6 +499,13 @@ int TestOtherLogging()
 	DLOG_ASSERT(log, 1 == 1);	TEST_EXPECTED(false);
 	DLOG_ASSERT(log, 1 == 2);	TEST_EXPECTED(true && debug);
 
+	// Windows-only tests.
+#ifdef _WIN32
+	OutputDebugStringLogger dlog;
+
+	LOG_INFO(dlog) << "Test log to debug output" << endl;
+#endif
+
 	cout << "done!" << endl;
 	return failed;
 }
@@ -435,6 +519,7 @@ int TestLogging()
 	totalFailures += TestConditionMacros();
 	totalFailures += TestCheckMacros();
 	totalFailures += TestTeeLogger();
+	totalFailures += TestRotatingLoggers();
 	totalFailures += TestOtherLogging();
 
 #ifndef CPPLOG_NO_THREADING
