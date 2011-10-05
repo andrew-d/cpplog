@@ -115,7 +115,7 @@ namespace cpplog
 		inline static const char* fileNameFromPath(const char* filePath)
 		{
 			const char* fileName = strrchr(filePath, '/');
-#ifdef _WIN32
+#if defined(_WIN32)
 			if( !fileName )
 				fileName = strrchr(filePath, '\\');
 #endif
@@ -123,21 +123,39 @@ namespace cpplog
 		}
 
 		// Thread-safe version of localtime()
-		bool slocaltime(::tm* out, const ::time_t* in)
+		inline bool slocaltime(::tm* const out, const ::time_t* const in)
 		{
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_MSC_VER)
 			return ::localtime_s(out, in) == 0;
+#elif defined(__MINGW32__)
+			// Warning - not entirely thread safe on MinGW
+			::tm * localOut = ::localtime(in);
+			if( localOut )
+			{
+				::memcpy(out, localOut, sizeof(::tm));
+			}
+			return localOut != NULL;
 #else
+			// Default to SUSv2 (libc >= 5.2.5) function.
 			return ::localtime_r(in, out) != NULL;
 #endif
 		}
 
 		// Thread-safe version of gmtime()
-		bool sgmtime(::tm* out, const ::time_t* in)
+		inline bool sgmtime(::tm* const out, const ::time_t* const in)
 		{
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_MSC_VER)
 			return ::gmtime_s(out, in) == 0;
+#elif defined(__MINGW32__)
+			// Warning - not entirely thread safe on MinGW
+			::tm * localOut = ::gmtime(in);
+			if( localOut )
+			{
+				::memcpy(out, localOut, sizeof(::tm));
+			}
+			return localOut != NULL;
 #else
+			// Default to SUSv2 (libc >= 5.2.5) function.
 			return ::gmtime_r(in, out) != NULL;
 #endif
 		}

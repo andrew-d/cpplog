@@ -4,27 +4,29 @@
 
 #include <windows.h>
 
-template <class Elem>
-class outputdebug_buf: public std::basic_stringbuf<Elem>
+template <class _Elem>
+class outputdebug_buf: public std::basic_stringbuf<_Elem>
 {
+private:
+	inline void output_debug_string(const _Elem* e);
+
 public:
 	virtual int sync ( )
 	{
-		output_debug_string(str().c_str());
+		//outputdebug_buf<_Elem>::output_debug_string(std::basic_stringbuf<_Elem>::str().c_str());
+		this->output_debug_string(std::basic_stringbuf<_Elem>::str().c_str());
 		return 0;
 	}
-private:
-	void output_debug_string(const Elem* e);
 };
 
 template<>
-void outputdebug_buf<char>::output_debug_string(const char* e)
+inline void outputdebug_buf<char>::output_debug_string(const char* e)
 {
 	::OutputDebugStringA(e);
 }
 
 template<>
-void outputdebug_buf<wchar_t>::output_debug_string(const wchar_t* e)
+inline void outputdebug_buf<wchar_t>::output_debug_string(const wchar_t* e)
 {
 	::OutputDebugStringW(e);
 }
@@ -36,7 +38,7 @@ public:
 	outputdebug_stream() : std::basic_ostream<_Elem>(new outputdebug_buf<_Elem>())
 	{}
 
-	~outputdebug_stream(){ delete rdbuf(); }
+	~outputdebug_stream(){ delete this->rdbuf(); }
 };
 
 typedef outputdebug_stream<char> dbgwin_stream;
