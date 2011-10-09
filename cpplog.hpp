@@ -294,7 +294,24 @@ namespace cpplog
 			m_logData->processId	= boost::interprocess::detail::get_current_process_id();
 			m_logData->threadId		= (unsigned long)boost::interprocess::detail::get_current_thread_id();
 #endif
+            InitLogMessage();
 		}
+
+        void InitLogMessage()
+        {
+			// Log process ID and thread ID.
+#ifndef CPPLOG_NO_SYSTEM_IDS
+			m_logData->stream << "[" 
+						<< std::right << std::setfill('0') << std::setw(8) << std::hex 
+						<< m_logData->processId << "."
+						<< std::setfill('0') << std::setw(8) << std::hex 
+						<< m_logData->threadId << "] ";
+#endif
+
+			m_logData->stream << std::setfill(' ') << std::setw(5) << std::left << std::dec 
+						<< LogMessage::getLevelName(m_logData->level) << " - " 
+						<< m_logData->fileName << "(" << m_logData->line << "): ";
+        }
 
 		void Flush()
 		{
@@ -375,20 +392,7 @@ namespace cpplog
 
 		virtual bool sendLogMessage(LogData* logData)
 		{
-			// Log process ID and thread ID.
-#ifndef CPPLOG_NO_SYSTEM_IDS
-			m_logStream << "[" 
-						<< std::right << std::setfill('0') << std::setw(8) << std::hex 
-						<< logData->processId << "."
-						<< std::setfill('0') << std::setw(8) << std::hex 
-						<< logData->threadId << "] ";
-#endif
-
-			m_logStream << std::setfill(' ') << std::setw(5) << std::left << std::dec 
-						<< LogMessage::getLevelName(logData->level) << " - " 
-						<< logData->fileName << "(" << logData->line << "): " 
-						<< logData->buffer;
-
+			m_logStream	<< logData->buffer;
 			m_logStream	<< std::flush;
 
 			return true;
