@@ -452,14 +452,12 @@ namespace cpplog
 
 	public:
 		FileLogger(std::string logFilePath)
-			: m_path(logFilePath), m_outStream(logFilePath.c_str(), std::ios_base::out),
-			  OstreamLogger(m_outStream)
+			: OstreamLogger(m_outStream), m_path(logFilePath), m_outStream(logFilePath.c_str(), std::ios_base::out)
 		{
 		}
 
 		FileLogger(std::string logFilePath, bool append)
-			: m_path(logFilePath), m_outStream(logFilePath.c_str(), append ? std::ios_base::app : std::ios_base::out),
-			  OstreamLogger(m_outStream)
+			: OstreamLogger(m_outStream), m_path(logFilePath), m_outStream(logFilePath.c_str(), append ? std::ios_base::app : std::ios_base::out)
 		{
 		}
 	};
@@ -481,18 +479,18 @@ namespace cpplog
 
 	public:
 		SizeRotateFileLogger(pfBuildFileName nameFunc, size_t maxSize)
-			: m_maxSize(maxSize), m_logNumber(0),
+			: OstreamLogger(m_outStream), m_maxSize(maxSize), m_logNumber(0),
 			  m_buildFunc(nameFunc), m_context(NULL), 
-			  m_outStream(), OstreamLogger(m_outStream)
+			  m_outStream()
 		{
 			// "Rotate" to open our initial log.
 			RotateLog();
 		}
 
 		SizeRotateFileLogger(pfBuildFileName nameFunc, void* context, size_t maxSize)
-			: m_maxSize(maxSize), m_logNumber(0),
+			: OstreamLogger(m_outStream), m_maxSize(maxSize), m_logNumber(0),
 			  m_buildFunc(nameFunc), m_context(context), 
-			  m_outStream(), OstreamLogger(m_outStream)
+			  m_outStream()
 		{
 			// "Rotate" to open our initial log.
 			RotateLog();
@@ -552,18 +550,16 @@ namespace cpplog
 
 	public:
 		TimeRotateFileLogger(pfBuildFileName nameFunc, unsigned long intervalSeconds)
-			: m_logNumber(0), m_rotateInterval(intervalSeconds),
-			  m_buildFunc(nameFunc), m_context(NULL),
-			  OstreamLogger(m_outStream)
+			: OstreamLogger(m_outStream), m_rotateInterval(intervalSeconds), m_logNumber(0),
+			  m_buildFunc(nameFunc), m_context(NULL)
 		{
 			// "Rotate" to open our initial log.
 			RotateLog(::time(NULL));
 		}
 
 		TimeRotateFileLogger(pfBuildFileName nameFunc, void* context, unsigned long intervalSeconds)
-			: m_logNumber(0), m_rotateInterval(intervalSeconds),
-			  m_buildFunc(nameFunc), m_context(context),
-			  OstreamLogger(m_outStream)
+			: OstreamLogger(m_outStream), m_rotateInterval(intervalSeconds), m_logNumber(0),
+			  m_buildFunc(nameFunc), m_context(context)
 		{
 			// "Rotate" to open our initial log.
 			RotateLog(::time(NULL));
