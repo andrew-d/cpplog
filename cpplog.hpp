@@ -28,8 +28,8 @@
 //		#define CPPLOG_HELPER_MACROS
 //			Enables inclusion of the CHECK_* macros.
 //
-//		#define CPPLOG_FATAL_NOEXIT
-//			Causes a fatal error to not exit() the process.
+//		#define CPPLOG_FATAL_EXIT
+//			Causes a fatal error to exit() the process.
 //
 //		#define	CPPLOG_FATAL_EXIT_DEBUG
 //			Causes a fatal error to exit() the process if in debug mode.
@@ -60,7 +60,7 @@
 //#define CPPLOG_SYSTEM_IDS
 //#define CPPLOG_THREADING
 //#define CPPLOG_HELPER_MACROS
-//#define CPPLOG_FATAL_NOEXIT
+//#define CPPLOG_FATAL_EXIT
 //#define CPPLOG_FATAL_EXIT_DEBUG
 
 
@@ -342,11 +342,11 @@ namespace cpplog
 
 #ifdef _DEBUG
 // Only exit in debug mode if CPPLOG_FATAL_EXIT_DEBUG is set.
-#ifdef(CPPLOG_FATAL_EXIT_DEBUG) && !defined(CPPLOG_FATAL_NOEXIT)
+#if defined(CPPLOG_FATAL_EXIT_DEBUG CPPLOG_FATAL_EXIT)
 					::exit(1);
 #endif
 #else //!_DEBUG
-#ifdef(CPPLOG_FATAL_EXIT_DEBUG)
+#ifdef CPPLOG_FATAL_EXIT_DEBUG
 					::exit(1)
 #endif
 #endif

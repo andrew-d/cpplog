@@ -196,6 +196,7 @@ int TestConditionMacros()
 	return failed;
 }
 
+#ifdef CPPLOG_HELPER_MACROS
 int TestCheckMacros()
 {
 	int failed = 0;
@@ -268,6 +269,7 @@ int TestCheckMacros()
 	cout << "done!" << endl;
 	return failed;
 }
+#endif
 
 int TestTeeLogger()
 {
@@ -517,7 +519,9 @@ int TestLogging()
 	totalFailures += TestLogLevels();
 	totalFailures += TestDebugLogLevels();
 	totalFailures += TestConditionMacros();
+#ifdef CPPLOG_HELPER_MACROS
 	totalFailures += TestCheckMacros();
+#endif
 	totalFailures += TestTeeLogger();
 	totalFailures += TestRotatingLoggers();
 	totalFailures += TestOtherLogging();
