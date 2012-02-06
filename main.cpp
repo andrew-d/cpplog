@@ -302,7 +302,7 @@ int TestTeeLogger()
 	return failed;
 }
 
-#ifndef CPPLOG_NO_THREADING
+#ifdef CPPLOG_THREADING
 int TestBackgroundLogger()
 {
 	int failed = 0, line;
@@ -522,7 +522,7 @@ int TestLogging()
 	totalFailures += TestRotatingLoggers();
 	totalFailures += TestOtherLogging();
 
-#ifndef CPPLOG_NO_THREADING
+#ifdef CPPLOG_THREADING
 	totalFailures += TestBackgroundLogger();
 	totalFailures += TestBackgroundLoggerConcurrency();
 #endif
