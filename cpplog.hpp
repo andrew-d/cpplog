@@ -31,9 +31,8 @@
 //		#define CPPLOG_FATAL_NOEXIT
 //			Causes a fatal error to not exit() the process.
 //
-//		#define	CPPLOG_FATAL_NOEXIT_DEBUG
-//			As above, but only in debug mode.
-//			Note: Defined below by default.
+//		#define	CPPLOG_FATAL_EXIT_DEBUG
+//			Causes a fatal error to exit() the process if in debug mode.
 
 // ------------------------------- DEFINITIONS -------------------------------
 
@@ -62,8 +61,7 @@
 //#define CPPLOG_THREADING
 //#define CPPLOG_HELPER_MACROS
 //#define CPPLOG_FATAL_NOEXIT
-
-#define CPPLOG_FATAL_NOEXIT_DEBUG
+//#define CPPLOG_FATAL_EXIT_DEBUG
 
 
 // ---------------------------------- CODE -----------------------------------
@@ -343,12 +341,12 @@ namespace cpplog
 					getSetFatal(false, true);
 
 #ifdef _DEBUG
-// Only exit in debug mode if CPPLOG_FATAL_NOEXIT_DEBUG is not set.
-#if !defined(CPPLOG_FATAL_NOEXIT_DEBUG) && !defined(CPPLOG_FATAL_NOEXIT)
+// Only exit in debug mode if CPPLOG_FATAL_EXIT_DEBUG is set.
+#ifdef(CPPLOG_FATAL_EXIT_DEBUG) && !defined(CPPLOG_FATAL_NOEXIT)
 					::exit(1);
 #endif
 #else //!_DEBUG
-#if !defined(CPPLOG_FATAL_NOEXIT_DEBUG)
+#ifdef(CPPLOG_FATAL_EXIT_DEBUG)
 					::exit(1)
 #endif
 #endif
