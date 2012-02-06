@@ -25,8 +25,8 @@
 //			CPPLOG_SYSTEM_IDS introduces a dependency on Boost;
 //			this means that the library is no longer truly header-only.
 //
-//		#define CPPLOG_NO_HELPER_MACROS
-//			Disables inclusion of the CHECK_* macros.
+//		#define CPPLOG_HELPER_MACROS
+//			Enables inclusion of the CHECK_* macros.
 //
 //		#define CPPLOG_FATAL_NOEXIT
 //			Causes a fatal error to not exit() the process.
@@ -60,7 +60,7 @@
 //#define CPPLOG_FILTER_LEVEL				LL_WARN
 //#define CPPLOG_SYSTEM_IDS
 //#define CPPLOG_THREADING
-//#define CPPLOG_NO_HELPER_MACROS
+//#define CPPLOG_HELPER_MACROS
 //#define CPPLOG_FATAL_NOEXIT
 
 #define CPPLOG_FATAL_NOEXIT_DEBUG
@@ -1012,7 +1012,7 @@ namespace cpplog
 
 
 // Only include further helper macros if we are supposed to.
-#ifndef CPPLOG_NO_HELPER_MACROS
+#ifdef CPPLOG_HELPER_MACROS
 
 // The following CHECK_* functions act similar to a LOG_ASSERT, but with a bit more
 // readability.
@@ -1071,6 +1071,6 @@ namespace cpplog
 #endif
 
 
-#endif //CPPLOG_NO_HELPER_MACROS
+#endif
 
 #endif //_CPPLOG_H
