@@ -17,23 +17,22 @@
 //		#define CPPLOG_FILTER_LEVEL		<level>
 //			Prevents all log messages with level less than <level> from being emitted.
 //
-//		#define CPPLOG_NO_SYSTEM_IDS
-//			Disables capturing of the Process and Thread ID.
+//		#define CPPLOG_SYSTEM_IDS
+//			Enables capturing of the Process and Thread ID.
 //
-//		#define CPPLOG_NO_THREADING
-//			Disables threading (BackgroundLogger).  Note that defining this and 
-//			CPPLOG_NO_SYSTEM_IDS means that the library is truly header-only, 
-//			as it no longer depends on Boost.
+//		#define CPPLOG_THREADING
+//			Enables threading (BackgroundLogger).  Note that defining this or 
+//			CPPLOG_SYSTEM_IDS introduces a dependency on Boost;
+//			this means that the library is no longer truly header-only.
 //
-//		#define CPPLOG_NO_HELPER_MACROS
-//			Disables inclusion of the CHECK_* macros.
+//		#define CPPLOG_HELPER_MACROS
+//			Enables inclusion of the CHECK_* macros.
 //
-//		#define CPPLOG_FATAL_NOEXIT
-//			Causes a fatal error to not exit() the process.
+//		#define CPPLOG_FATAL_EXIT
+//			Causes a fatal error to exit() the process.
 //
-//		#define	CPPLOG_FATAL_NOEXIT_DEBUG
-//			As above, but only in debug mode.
-//			Note: Defined below by default.
+//		#define	CPPLOG_FATAL_EXIT_DEBUG
+//			Causes a fatal error to exit() the process if in debug mode.
 
 // ------------------------------- DEFINITIONS -------------------------------
 
@@ -58,21 +57,20 @@
 // ------------------------------ CONFIGURATION ------------------------------
 
 //#define CPPLOG_FILTER_LEVEL				LL_WARN
-//#define CPPLOG_NO_SYSTEM_IDS
-//#define CPPLOG_NO_THREADING
-//#define CPPLOG_NO_HELPER_MACROS
-//#define CPPLOG_FATAL_NOEXIT
-
-#define CPPLOG_FATAL_NOEXIT_DEBUG
+//#define CPPLOG_SYSTEM_IDS
+//#define CPPLOG_THREADING
+#define CPPLOG_HELPER_MACROS
+#define CPPLOG_FATAL_EXIT
+//#define CPPLOG_FATAL_EXIT_DEBUG
 
 
 // ---------------------------------- CODE -----------------------------------
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #endif
 
-#ifndef CPPLOG_NO_THREADING
+#ifdef CPPLOG_THREADING
 #include <boost/thread.hpp>
 #include "concurrent_queue.hpp"
 #endif
@@ -188,11 +186,11 @@ namespace cpplog
 		time_t messageTime;
 		::tm utcTime;
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 		// Process/thread ID.
 		unsigned long processId;
 		unsigned long threadId;
-#endif //CPPLOG_NO_SYSTEM_IDS
+#endif
 
 		// Buffer for our text.
 		char buffer[k_logBufferSize];
@@ -200,7 +198,7 @@ namespace cpplog
 		// Constructor that initializes our stream.
 		LogData(loglevel_t logLevel)
 			: stream(buffer, k_logBufferSize), level(logLevel)
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 			  , processId(0), threadId(0)
 #endif
 		{
@@ -290,7 +288,7 @@ namespace cpplog
 			::tm* gmt = ::gmtime(&m_logData->messageTime);
 			memcpy(&m_logData->utcTime, gmt, sizeof(tm));
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 			// Get process/thread ID.
 			m_logData->processId	= boost::interprocess::detail::get_current_process_id();
 			m_logData->threadId		= (unsigned long)boost::interprocess::detail::get_current_thread_id();
@@ -301,7 +299,7 @@ namespace cpplog
         void InitLogMessage()
         {
 			// Log process ID and thread ID.
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 			m_logData->stream << "[" 
 						<< std::right << std::setfill('0') << std::setw(8) << std::hex 
 						<< m_logData->processId << "."
@@ -343,12 +341,12 @@ namespace cpplog
 					getSetFatal(false, true);
 
 #ifdef _DEBUG
-// Only exit in debug mode if CPPLOG_FATAL_NOEXIT_DEBUG is not set.
-#if !defined(CPPLOG_FATAL_NOEXIT_DEBUG) && !defined(CPPLOG_FATAL_NOEXIT)
+// Only exit in debug mode if CPPLOG_FATAL_EXIT_DEBUG is set.
+#if defined(CPPLOG_FATAL_EXIT_DEBUG) || defined(CPPLOG_FATAL_EXIT)
 					::exit(1);
 #endif
 #else //!_DEBUG
-#if !defined(CPPLOG_FATAL_NOEXIT_DEBUG)
+#ifdef CPPLOG_FATAL_EXIT_DEBUG
 					::exit(1)
 #endif
 #endif
@@ -805,7 +803,7 @@ namespace cpplog
 
 	// Logger that moves all processing of log messages to a background thread. 
 	// Only include if we have support for threading.
-#ifndef CPPLOG_NO_THREADING
+#ifdef CPPLOG_THREADING
 	class BackgroundLogger : public BaseLogger
 	{
 	private:
@@ -875,7 +873,7 @@ namespace cpplog
 
 	};
 
-#endif //CPPLOG_NO_THREADING
+#endif
 
 	// Seperate namespace for loggers that use templates.
 	namespace templated
@@ -1012,7 +1010,7 @@ namespace cpplog
 
 
 // Only include further helper macros if we are supposed to.
-#ifndef CPPLOG_NO_HELPER_MACROS
+#ifdef CPPLOG_HELPER_MACROS
 
 // The following CHECK_* functions act similar to a LOG_ASSERT, but with a bit more
 // readability.
@@ -1071,6 +1069,6 @@ namespace cpplog
 #endif
 
 
-#endif //CPPLOG_NO_HELPER_MACROS
+#endif
 
 #endif //_CPPLOG_H
