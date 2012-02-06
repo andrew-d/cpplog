@@ -382,7 +382,7 @@ int TestBackgroundLoggerConcurrency()
 
 	return failed;
 }
-#endif // CPPLOG_NO_THREADING
+#endif
 
 void SizeNameFunc(unsigned long logNumber, std::string& newFileName, void* context)
 {

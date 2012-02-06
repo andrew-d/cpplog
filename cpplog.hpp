@@ -59,7 +59,7 @@
 
 //#define CPPLOG_FILTER_LEVEL				LL_WARN
 //#define CPPLOG_SYSTEM_IDS
-#define CPPLOG_NO_THREADING
+//#define CPPLOG_THREADING
 //#define CPPLOG_NO_HELPER_MACROS
 //#define CPPLOG_FATAL_NOEXIT
 
@@ -875,7 +875,7 @@ namespace cpplog
 
 	};
 
-#endif //CPPLOG_NO_THREADING
+#endif
 
 	// Seperate namespace for loggers that use templates.
 	namespace templated
