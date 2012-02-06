@@ -342,7 +342,7 @@ namespace cpplog
 
 #ifdef _DEBUG
 // Only exit in debug mode if CPPLOG_FATAL_EXIT_DEBUG is set.
-#if defined(CPPLOG_FATAL_EXIT_DEBUG CPPLOG_FATAL_EXIT)
+#if defined(CPPLOG_FATAL_EXIT_DEBUG) || defined(CPPLOG_FATAL_EXIT)
 					::exit(1);
 #endif
 #else //!_DEBUG
