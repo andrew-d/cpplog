@@ -17,12 +17,12 @@
 //		#define CPPLOG_FILTER_LEVEL		<level>
 //			Prevents all log messages with level less than <level> from being emitted.
 //
-//		#define CPPLOG_NO_SYSTEM_IDS
-//			Disables capturing of the Process and Thread ID.
+//		#define CPPLOG_SYSTEM_IDS
+//			Enables capturing of the Process and Thread ID.
 //
 //		#define CPPLOG_NO_THREADING
 //			Disables threading (BackgroundLogger).  Note that defining this and 
-//			CPPLOG_NO_SYSTEM_IDS means that the library is truly header-only, 
+//			disabling CPPLOG_SYSTEM_IDS means that the library is truly header-only, 
 //			as it no longer depends on Boost.
 //
 //		#define CPPLOG_NO_HELPER_MACROS
@@ -58,7 +58,7 @@
 // ------------------------------ CONFIGURATION ------------------------------
 
 //#define CPPLOG_FILTER_LEVEL				LL_WARN
-#define CPPLOG_NO_SYSTEM_IDS
+//#define CPPLOG_SYSTEM_IDS
 #define CPPLOG_NO_THREADING
 //#define CPPLOG_NO_HELPER_MACROS
 //#define CPPLOG_FATAL_NOEXIT
@@ -68,7 +68,7 @@
 
 // ---------------------------------- CODE -----------------------------------
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #endif
 
@@ -188,11 +188,11 @@ namespace cpplog
 		time_t messageTime;
 		::tm utcTime;
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 		// Process/thread ID.
 		unsigned long processId;
 		unsigned long threadId;
-#endif //CPPLOG_NO_SYSTEM_IDS
+#endif
 
 		// Buffer for our text.
 		char buffer[k_logBufferSize];
@@ -200,7 +200,7 @@ namespace cpplog
 		// Constructor that initializes our stream.
 		LogData(loglevel_t logLevel)
 			: stream(buffer, k_logBufferSize), level(logLevel)
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 			  , processId(0), threadId(0)
 #endif
 		{
@@ -290,7 +290,7 @@ namespace cpplog
 			::tm* gmt = ::gmtime(&m_logData->messageTime);
 			memcpy(&m_logData->utcTime, gmt, sizeof(tm));
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 			// Get process/thread ID.
 			m_logData->processId	= boost::interprocess::detail::get_current_process_id();
 			m_logData->threadId		= (unsigned long)boost::interprocess::detail::get_current_thread_id();
@@ -301,7 +301,7 @@ namespace cpplog
         void InitLogMessage()
         {
 			// Log process ID and thread ID.
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 			m_logData->stream << "[" 
 						<< std::right << std::setfill('0') << std::setw(8) << std::hex 
 						<< m_logData->processId << "."

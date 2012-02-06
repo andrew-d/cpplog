@@ -7,7 +7,7 @@
 
 #include "cpplog.hpp"
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_ID
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 using namespace boost::interprocess::detail;
 #endif
@@ -20,7 +20,7 @@ void getLogHeader(string& outString, loglevel_t level, const char* file, unsigne
 {
 	ostringstream outStream;
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_ID
 	unsigned long processId	= get_current_process_id();
 	unsigned long threadId	= (unsigned long)get_current_thread_id();
 
