@@ -7,7 +7,7 @@
 
 #include "cpplog.hpp"
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 using namespace boost::interprocess::detail;
 #endif
@@ -20,7 +20,7 @@ void getLogHeader(string& outString, loglevel_t level, const char* file, unsigne
 {
 	ostringstream outStream;
 
-#ifndef CPPLOG_NO_SYSTEM_IDS
+#ifdef CPPLOG_SYSTEM_IDS
 	unsigned long processId	= get_current_process_id();
 	unsigned long threadId	= (unsigned long)get_current_thread_id();
 
@@ -196,6 +196,7 @@ int TestConditionMacros()
 	return failed;
 }
 
+#ifdef CPPLOG_HELPER_MACROS
 int TestCheckMacros()
 {
 	int failed = 0;
@@ -268,6 +269,7 @@ int TestCheckMacros()
 	cout << "done!" << endl;
 	return failed;
 }
+#endif
 
 int TestTeeLogger()
 {
@@ -302,7 +304,7 @@ int TestTeeLogger()
 	return failed;
 }
 
-#ifndef CPPLOG_NO_THREADING
+#ifdef CPPLOG_THREADING
 int TestBackgroundLogger()
 {
 	int failed = 0, line;
@@ -382,7 +384,7 @@ int TestBackgroundLoggerConcurrency()
 
 	return failed;
 }
-#endif // CPPLOG_NO_THREADING
+#endif
 
 void SizeNameFunc(unsigned long logNumber, std::string& newFileName, void* context)
 {
@@ -517,12 +519,14 @@ int TestLogging()
 	totalFailures += TestLogLevels();
 	totalFailures += TestDebugLogLevels();
 	totalFailures += TestConditionMacros();
+#ifdef CPPLOG_HELPER_MACROS
 	totalFailures += TestCheckMacros();
+#endif
 	totalFailures += TestTeeLogger();
 	totalFailures += TestRotatingLoggers();
 	totalFailures += TestOtherLogging();
 
-#ifndef CPPLOG_NO_THREADING
+#ifdef CPPLOG_THREADING
 	totalFailures += TestBackgroundLogger();
 	totalFailures += TestBackgroundLoggerConcurrency();
 #endif
