@@ -17,3 +17,4 @@ Thanks to (in alphabetical order):
   - fakechris [GitHub]
   - Kranar [Reddit]
   - vvavrychuk [GitHub]
+  - z00m1n [GitHub]
