@@ -405,7 +405,7 @@ void TimeNameFunc(::tm* time, unsigned long logNumber,
 	fileName << setfill('0');
 	
 	fileName << setw(4) << (time->tm_year + 1900) << "-"
-		     << setw(2) << time->tm_mon			  << "-"
+			 << setw(2) << time->tm_mon			  << "-"
 			 << setw(2) << time->tm_mday
 			 << "_"
 			 << setw(2) << time->tm_hour << "-"

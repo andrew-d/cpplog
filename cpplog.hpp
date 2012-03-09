@@ -293,11 +293,12 @@ namespace cpplog
 			m_logData->processId	= boost::interprocess::detail::get_current_process_id();
 			m_logData->threadId		= (unsigned long)boost::interprocess::detail::get_current_thread_id();
 #endif
-            InitLogMessage();
+			
+			InitLogMessage();
 		}
-
-        void InitLogMessage()
-        {
+		
+		void InitLogMessage()
+		{
 			// Log process ID and thread ID.
 #ifdef CPPLOG_SYSTEM_IDS
 			m_logData->stream << "[" 
@@ -310,7 +311,7 @@ namespace cpplog
 			m_logData->stream << std::setfill(' ') << std::setw(5) << std::left << std::dec 
 						<< LogMessage::getLevelName(m_logData->level) << " - " 
 						<< m_logData->fileName << "(" << m_logData->line << "): ";
-        }
+		}
 
 		void Flush()
 		{
@@ -375,7 +376,6 @@ namespace cpplog
 					return "OTHER";
 			};
 		};
-
 	};
 
 	// Generic class - logs to a given std::ostream.
