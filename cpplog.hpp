@@ -6,13 +6,14 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include <strstream>
 #include <fstream>
 #include <sstream>
 #include <cstring>
 #include <ctime>
 #include <vector>
 #include <cstdlib>
+#include <streambuf>
+#include <ostream>
 
 // The following #define's will change the behaviour of this library.
 //      #define CPPLOG_FILTER_LEVEL     <level>
@@ -254,17 +255,74 @@ namespace cpplog
             VoidStreamClass() { }
             void operator&(std::ostream&) { }
         };
+
+        // fixed_streambuf is a minimal implementation around std::basic_streambuf
+        // with a fixed size backing buffer. It implements additional functionality
+        // needed by cpplog and exposes the backing buffer in a safe way via c_str().
+        // This makes it possible to avoid extra copying.
+        class fixed_streambuf : public std::basic_streambuf<char, std::char_traits<char> >
+        {
+        private:
+            // Constant.
+            static const size_t k_logBufferCapacity = 20000;
+            // Leave room for terminating null character in case buffer fills up.
+            char m_buffer[k_logBufferCapacity+1];
+
+        public:
+            fixed_streambuf()
+            {
+                // Use allocated buffer as backing store.
+                setp(m_buffer, m_buffer + k_logBufferCapacity);
+                // Insert terminator at buffer end.
+                m_buffer[k_logBufferCapacity] = '\0';
+            }
+
+            std::streamsize length()   const { return pptr()-pbase();         }
+            std::streamsize capacity() const { return k_logBufferCapacity;    }
+            bool empty()               const { return length() == 0;          }
+            bool full()                const { return length() == capacity(); }
+
+            // Unput one character.
+            int_type sunputc()
+            {
+                if ( (!pptr()) || (pptr()==pbase()) )
+                    return pbackfail();
+
+                pbump(-1);
+
+                // This is safe because *epptr() always is '\0' and inside
+                // the backing buffer.
+                return traits_type::to_int_type(*(pptr()+1));
+            }
+
+            // Peek at last inserted character.
+            int peek() const
+            {
+                if ( (!pptr()) || (pptr()==pbase()) )
+                    return std::char_traits<char>::eof();
+
+                return static_cast<int>(*(pptr()-1));
+            }
+
+            const char* c_str() const
+            {
+                // Add terminating null character.
+                // This is safe even if the buffer is full to its capacity since
+                // epptr() is inside the backing buffer.
+                *pptr() = '\0';
+                return pbase();
+            }
+        };
     };
 
     // Logger data.  This is sent to a logger when a LogMessage is Flush()'ed, or
     // when the destructor is called.
     struct LogData
     {
-        // Constant.
-        static const size_t k_logBufferSize = 20000;
 
-        // Our stream to log data to.
-        std::ostrstream stream;
+        // Our streambuf & stream to log data to.
+        helpers::fixed_streambuf streamBuffer;
+        std::ostream stream;
 
         // Captured data.
         unsigned int level;
@@ -280,12 +338,10 @@ namespace cpplog
         helpers::thread_id_t  threadId;
 #endif
 
-        // Buffer for our text.
-        char buffer[k_logBufferSize];
 
         // Constructor that initializes our stream.
         LogData(loglevel_t logLevel)
-            : stream(buffer, k_logBufferSize), level(logLevel)
+            : streamBuffer(), stream(&streamBuffer), level(logLevel)
 #ifdef CPPLOG_SYSTEM_IDS
               , processId(0), threadId(0)
 #endif
@@ -405,13 +461,17 @@ namespace cpplog
         {
             if( !m_flushed )
             {
-                // Check if we have a newline.
-                char lastChar = m_logData->buffer[m_logData->stream.pcount() - 1];
-                if( lastChar != '\n' )
-                    m_logData->stream << std::endl;
+                // Insert newline, if needed.
+                helpers::fixed_streambuf* const sb = &m_logData->streamBuffer;
+                if( sb->peek() != '\n' )
+                {
+                    // If buffer is full, remove last char to leave room for newline.
+                    if (sb->full())
+                        sb->sunputc();
 
-                // Null-terminate.
-                m_logData->stream << '\0';
+                    // Insert newline
+                    sb->sputc('\n');
+                }
 
                 // Save the log level.
                 loglevel_t savedLogLevel = m_logData->level;
@@ -479,7 +539,8 @@ namespace cpplog
 
         virtual bool sendLogMessage(LogData* logData)
         {
-            m_logStream << logData->buffer;
+            helpers::fixed_streambuf* const sb = &logData->streamBuffer;
+            m_logStream.write(sb->c_str(), sb->length());
             m_logStream << std::flush;
 
             return true;
