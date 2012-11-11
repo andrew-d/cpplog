@@ -546,9 +546,15 @@ int TestLogging()
 
 int main(void)
 {
-    int totalFailures;
+    // Print an example log to show formatting.
+    {
+        StdErrLogger slog;
+        LOG_WARN(slog) << "This is an example log message.";
+        cerr << endl;
+    }
 
-    totalFailures = TestLogging();
+    // Track total failures.
+    int totalFailures = TestLogging();
 
     cout << "\n------------------------------" << endl;
     if( 0 == totalFailures )
