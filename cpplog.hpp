@@ -66,6 +66,7 @@
 #define CPPLOG_HELPER_MACROS
 #define CPPLOG_FATAL_EXIT
 //#define CPPLOG_FATAL_EXIT_DEBUG
+//#define CPPLOG_USE_OLD_BOOST
 
 
 // ---------------------------------- CODE -----------------------------------
@@ -176,6 +177,8 @@ namespace cpplog
         // at you...).  Note that this kinda-sorta assumes a little-endian
         // architecture, if we want meaningful results.  Not super important,
         // though, since the address of a structure isn't actually that useful.
+        // TODO: I might rewrite this using templates to print properly if it's
+        // an unsigned long, and fall back to this implementation otherwise.
         inline void print_thread_id(std::ostream& stream, thread_id_t thread_id)
         {
             unsigned char* sptr = static_cast<unsigned char*>(
