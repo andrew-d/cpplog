@@ -477,7 +477,7 @@ namespace cpplog
         typedef void (*pfBuildFileName)(unsigned long logNumber, std::string& newFileName, void* context);
 
     private:
-        size_t          m_maxSize;
+        std::streamoff  m_maxSize;
         unsigned long   m_logNumber;
 
         SizeRotateFileLogger::pfBuildFileName m_buildFunc;
@@ -486,7 +486,7 @@ namespace cpplog
         std::ofstream   m_outStream;
 
     public:
-        SizeRotateFileLogger(pfBuildFileName nameFunc, size_t maxSize)
+        SizeRotateFileLogger(pfBuildFileName nameFunc, std::streamoff maxSize)
             : OstreamLogger(m_outStream), m_maxSize(maxSize), m_logNumber(0),
               m_buildFunc(nameFunc), m_context(NULL),
               m_outStream()
@@ -495,7 +495,8 @@ namespace cpplog
             RotateLog();
         }
 
-        SizeRotateFileLogger(pfBuildFileName nameFunc, void* context, size_t maxSize)
+        SizeRotateFileLogger(pfBuildFileName nameFunc, void* context,
+                std::streamoff maxSize)
             : OstreamLogger(m_outStream), m_maxSize(maxSize), m_logNumber(0),
               m_buildFunc(nameFunc), m_context(context),
               m_outStream()
@@ -583,8 +584,12 @@ namespace cpplog
             ::time_t currTime;
             ::time(&currTime);
 
+            unsigned long timeDiff = static_cast<unsigned long>(
+                                        difftime(currTime, m_lastRotateTime)
+                                     );
+
             // Is the difference greater than our number of seconds?
-            if( (unsigned long)difftime(currTime, m_lastRotateTime) > m_rotateInterval )
+            if( timeDiff > m_rotateInterval )
             {
                 // Yep, increment our log number and rotate.
                 m_logNumber++;
