@@ -866,7 +866,7 @@ namespace cpplog
             Init();
         }
 
-        ~BackgroundLogger()
+        void Stop()
         {
             // Push our "dummy" item on the queue ...
             m_queue.push(m_dummyItem);
@@ -875,6 +875,11 @@ namespace cpplog
             m_backgroundThread.join();
 
             // NOTE: The loop will free the dummy item for us, we can ignore it.
+        }
+
+        ~BackgroundLogger()
+        {
+            Stop();
         }
 
         virtual bool sendLogMessage(LogData* logData)

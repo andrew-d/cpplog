@@ -322,6 +322,12 @@ int TestBackgroundLogger()
     {
         BackgroundLogger blog(slogger);
         LOG_WARN(blog) << "Background message here." << endl;   line = __LINE__;
+
+        // Stop the logger...
+        blog.Stop();
+
+        // And send another message that doesn't get logged.
+        LOG_WARN(blog) << "This message will not get logged." << endl;
     }
 
     getLogHeader(expectedValue, LL_WARN, __FILE__, line);
