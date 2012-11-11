@@ -9,7 +9,11 @@
 
 #ifdef CPPLOG_SYSTEM_IDS
 #include <boost/interprocess/detail/os_thread_functions.hpp>
+#ifdef CPPLOG_USE_OLD_BOOST
 using namespace boost::interprocess::detail;
+#else
+using namespace boost::interprocess::ipcdetail;
+#endif
 #endif
 
 using namespace cpplog;

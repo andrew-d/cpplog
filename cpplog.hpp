@@ -33,6 +33,10 @@
 //
 //      #define CPPLOG_FATAL_EXIT_DEBUG
 //          Causes a fatal error to exit() the process if in debug mode.
+//
+//      # define CPPLOG_USE_OLD_BOOST
+//          Use the old Boost namespace for interprocess::ipcdetail.  Define
+//          this if you're using version 1.47 of Boost or earlier.
 
 // ------------------------------- DEFINITIONS -------------------------------
 
@@ -290,8 +294,13 @@ namespace cpplog
 
 #ifdef CPPLOG_SYSTEM_IDS
             // Get process/thread ID.
+#ifdef CPPLOG_USE_OLD_BOOST
             m_logData->processId    = boost::interprocess::detail::get_current_process_id();
             m_logData->threadId     = (unsigned long)boost::interprocess::detail::get_current_thread_id();
+#else
+            m_logData->processId    = boost::interprocess::ipcdetail::get_current_process_id();
+            m_logData->threadId     = (unsigned long)boost::interprocess::ipcdetail::get_current_thread_id();
+#endif
 #endif
 
             InitLogMessage();
