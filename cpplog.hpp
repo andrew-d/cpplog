@@ -163,6 +163,32 @@ namespace cpplog
 #endif
         }
 
+#ifdef CPPLOG_SYSTEM_IDS
+#ifdef CPPLOG_USE_OLD_BOOST
+        typedef boost::interprocess::detail::OS_process_id_t    process_id_t;
+        typedef boost::interprocess::detail::OS_thread_id_t     thread_id_t;
+#else
+        typedef boost::interprocess::ipcdetail::OS_process_id_t process_id_t;
+        typedef boost::interprocess::ipcdetail::OS_thread_id_t  thread_id_t;
+#endif
+        // This function lets us print a thread ID in all cases, including on
+        // platforms where it's actually a structure (pthread_t, I'm looking
+        // at you...).  Note that this kinda-sorta assumes a little-endian
+        // architecture, if we want meaningful results.  Not super important,
+        // though, since the address of a structure isn't actually that useful.
+        inline void print_thread_id(std::ostream& stream, thread_id_t thread_id)
+        {
+            unsigned char* sptr = static_cast<unsigned char*>(
+                                    static_cast<void*>(&thread_id)
+                                  );
+            for( size_t i = sizeof(thread_id_t); i != 0; i-- )
+            {
+                stream << std::setfill('0') << std::setw(2) << std::hex
+                       << static_cast<unsigned>(sptr[i - 1]);
+            }
+        }
+#endif
+
         // Simple class that allows us to evaluate a stream to void - prevents compiler errors.
         class VoidStreamClass
         {
@@ -192,8 +218,8 @@ namespace cpplog
 
 #ifdef CPPLOG_SYSTEM_IDS
         // Process/thread ID.
-        unsigned long processId;
-        unsigned long threadId;
+        helpers::process_id_t processId;
+        helpers::thread_id_t  threadId;
 #endif
 
         // Buffer for our text.
@@ -296,10 +322,10 @@ namespace cpplog
             // Get process/thread ID.
 #ifdef CPPLOG_USE_OLD_BOOST
             m_logData->processId    = boost::interprocess::detail::get_current_process_id();
-            m_logData->threadId     = (unsigned long)boost::interprocess::detail::get_current_thread_id();
+            m_logData->threadId     = boost::interprocess::detail::get_current_thread_id();
 #else
             m_logData->processId    = boost::interprocess::ipcdetail::get_current_process_id();
-            m_logData->threadId     = (unsigned long)boost::interprocess::ipcdetail::get_current_thread_id();
+            m_logData->threadId     = boost::interprocess::ipcdetail::get_current_thread_id();
 #endif
 #endif
 
@@ -312,9 +338,9 @@ namespace cpplog
 #ifdef CPPLOG_SYSTEM_IDS
             m_logData->stream << "["
                         << std::right << std::setfill('0') << std::setw(8) << std::hex
-                        << m_logData->processId << "."
-                        << std::setfill('0') << std::setw(8) << std::hex
-                        << m_logData->threadId << "] ";
+                        << m_logData->processId << ".";
+            helpers::print_thread_id(m_logData->stream, m_logData->threadId);
+            m_logData->stream << "] ";
 #endif
 
             m_logData->stream << std::setfill(' ') << std::setw(5) << std::left << std::dec
