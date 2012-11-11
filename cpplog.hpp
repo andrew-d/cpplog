@@ -20,6 +20,13 @@
 //      #define CPPLOG_SYSTEM_IDS
 //          Enables capturing of the Process and Thread ID.
 //
+//      #define CPPLOG_USE_SYSCALL_FOR_THREAD_ID
+//          Tries to use syscall(SYS_gettid) to get the current Thread ID.  This is
+//          especially useful on systems where boost's get_current_thread_id()
+//          will return a structure (usually pthread_t), which isn't incredibly
+//          useful.
+//          NOTE: Only useful if you also #define CPPLOG_SYSTEM_IDS
+//
 //      #define CPPLOG_THREADING
 //          Enables threading (BackgroundLogger).  Note that defining this or
 //          CPPLOG_SYSTEM_IDS introduces a dependency on Boost;
@@ -62,6 +69,7 @@
 
 //#define CPPLOG_FILTER_LEVEL               LL_WARN
 //#define CPPLOG_SYSTEM_IDS
+//#define CPPLOG_USE_SYSCALL_FOR_THREAD_ID
 //#define CPPLOG_THREADING
 #define CPPLOG_HELPER_MACROS
 #define CPPLOG_FATAL_EXIT
@@ -73,6 +81,10 @@
 
 #ifdef CPPLOG_SYSTEM_IDS
 #include <boost/interprocess/detail/os_thread_functions.hpp>
+#ifdef CPPLOG_USE_SYSCALL_FOR_THREAD_ID
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif
 #endif
 
 #ifdef CPPLOG_THREADING
@@ -164,14 +176,55 @@ namespace cpplog
 #endif
         }
 
+        // Below we have a bunch of macros, typedefs and such that make getting our
+        // current process/thread ID simpler.
 #ifdef CPPLOG_SYSTEM_IDS
 #ifdef CPPLOG_USE_OLD_BOOST
         typedef boost::interprocess::detail::OS_process_id_t    process_id_t;
-        typedef boost::interprocess::detail::OS_thread_id_t     thread_id_t;
+
+        inline process_id_t get_process_id()
+        {
+            return boost::interprocess::detail::get_current_process_id();
+        }
 #else
         typedef boost::interprocess::ipcdetail::OS_process_id_t process_id_t;
-        typedef boost::interprocess::ipcdetail::OS_thread_id_t  thread_id_t;
+
+        inline process_id_t get_process_id()
+        {
+            return boost::interprocess::ipcdetail::get_current_process_id();
+        }
 #endif
+
+#ifdef CPPLOG_USE_SYSCALL_FOR_THREAD_ID
+        typedef unsigned long                                   thread_id_t;
+
+        inline thread_id_t get_thread_id()
+        {
+            return static_cast<unsigned long>(syscall(SYS_gettid));
+        }
+
+        inline void print_thread_id(std::ostream& stream, thread_id_t thread_id)
+        {
+            stream << std::setfill('0') << std::setw(8) << std::hex
+                   << thread_id;
+        }
+#else   // CPPLOG_USE_SYSCALL_FOR_THREAD_ID
+#ifdef CPPLOG_USE_OLD_BOOST
+        typedef boost::interprocess::detail::OS_thread_id_t     thread_id_t;
+
+        inline thread_id_t get_thread_id()
+        {
+            return boost::interprocess::detail::get_current_thread_id();
+        }
+#else
+        typedef boost::interprocess::ipcdetail::OS_thread_id_t  thread_id_t;
+
+        inline thread_id_t get_thread_id()
+        {
+            return boost::interprocess::ipcdetail::get_current_thread_id();
+        }
+#endif  // CPPLOG_USE_OLD_BOOST
+
         // This function lets us print a thread ID in all cases, including on
         // platforms where it's actually a structure (pthread_t, I'm looking
         // at you...).  Note that this kinda-sorta assumes a little-endian
@@ -190,7 +243,8 @@ namespace cpplog
                        << static_cast<unsigned>(sptr[i - 1]);
             }
         }
-#endif
+#endif  // CPPLOG_USE_SYSCALL_FOR_THREAD_ID
+#endif  // CPPLOG_SYSTEM_IDS
 
         // Simple class that allows us to evaluate a stream to void - prevents compiler errors.
         class VoidStreamClass
@@ -323,14 +377,9 @@ namespace cpplog
 
 #ifdef CPPLOG_SYSTEM_IDS
             // Get process/thread ID.
-#ifdef CPPLOG_USE_OLD_BOOST
-            m_logData->processId    = boost::interprocess::detail::get_current_process_id();
-            m_logData->threadId     = boost::interprocess::detail::get_current_thread_id();
-#else
-            m_logData->processId    = boost::interprocess::ipcdetail::get_current_process_id();
-            m_logData->threadId     = boost::interprocess::ipcdetail::get_current_thread_id();
-#endif
-#endif
+            m_logData->processId    = helpers::get_process_id();
+            m_logData->threadId     = helpers::get_thread_id();
+#endif // CPPLOG_SYSTEM_IDS
 
             InitLogMessage();
         }

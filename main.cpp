@@ -25,8 +25,8 @@ void getLogHeader(string& outString, loglevel_t level, const char* file, unsigne
     ostringstream outStream;
 
 #ifdef CPPLOG_SYSTEM_IDS
-    cpplog::helpers::process_id_t processId = get_current_process_id();
-    cpplog::helpers::thread_id_t  threadId  = get_current_thread_id();
+    cpplog::helpers::process_id_t processId = cpplog::helpers::get_process_id();
+    cpplog::helpers::thread_id_t  threadId  = cpplog::helpers::get_thread_id();
 
     outStream << "["
               << right << setfill('0') << setw(8) << hex
