@@ -12,6 +12,7 @@
 #include <cstring>
 #include <ctime>
 #include <vector>
+#include <cstdlib>
 
 // The following #define's will change the behaviour of this library.
 //      #define CPPLOG_FILTER_LEVEL     <level>
@@ -431,11 +432,11 @@ namespace cpplog
 #ifdef _DEBUG
 // Only exit in debug mode if CPPLOG_FATAL_EXIT_DEBUG is set.
 #if defined(CPPLOG_FATAL_EXIT_DEBUG) || defined(CPPLOG_FATAL_EXIT)
-                    ::exit(1);
+                    std::exit(1);
 #endif
 #else //!_DEBUG
 #ifdef CPPLOG_FATAL_EXIT_DEBUG
-                    ::exit(1)
+                    std::exit(1)
 #endif
 #endif
                 }
