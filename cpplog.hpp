@@ -373,8 +373,9 @@ namespace cpplog
             m_logData->messageTime  = ::time(NULL);
 
             // Get current time.
-            ::tm* gmt = ::gmtime(&m_logData->messageTime);
-            memcpy(&m_logData->utcTime, gmt, sizeof(tm));
+            ::tm gmt;
+            cpplog::helpers::sgmtime(&gmt, &m_logData->messageTime);
+            memcpy(&m_logData->utcTime, &gmt, sizeof(tm));
 
 #ifdef CPPLOG_SYSTEM_IDS
             // Get process/thread ID.
