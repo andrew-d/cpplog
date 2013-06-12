@@ -1,6 +1,6 @@
 SOURCES=main.cpp
 DEPS=cpplog.hpp
-EXECUTABLE=main
+EXECUTABLE=cpplog_test
 INCLUDES=-I/usr/local/include
 LIBS=-L/usr/local/lib -lboost_thread-mt -lboost_system-mt
 
@@ -18,7 +18,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 test: $(EXECUTABLE)
-	./main
+	./$(EXECUTABLE)
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) *.log
