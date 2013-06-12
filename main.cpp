@@ -264,9 +264,9 @@ int TestCheckMacros()
     CHECK_STRNE(log, "qq", "qq") << "Should log"; TEST_EXPECTED(true);
 
     CHECK_NULL(log, NULL) << "Should not log"; TEST_EXPECTED(false);
-    CHECK_NULL(log, (void*)(1)) << "Should log"; TEST_EXPECTED(true);
+    CHECK_NULL(log, reinterpret_cast<void*>(1)) << "Should log"; TEST_EXPECTED(true);
 
-    CHECK_NOT_NULL(log, (void*)(1)) << "Should not log"; TEST_EXPECTED(false);
+    CHECK_NOT_NULL(log, reinterpret_cast<void*>(1)) << "Should not log"; TEST_EXPECTED(false);
     CHECK_NOT_NULL(log, NULL) << "Should log"; TEST_EXPECTED(true);
 
 #undef TEST_EXPECTED
@@ -396,7 +396,7 @@ int TestBackgroundLoggerConcurrency()
 }
 #endif
 
-void SizeNameFunc(unsigned long logNumber, std::string& newFileName, void* context)
+void SizeNameFunc(unsigned long logNumber, std::string& newFileName, void* /* context */)
 {
     std::ostringstream fileName;
 
@@ -405,8 +405,8 @@ void SizeNameFunc(unsigned long logNumber, std::string& newFileName, void* conte
     newFileName = fileName.str();
 }
 
-void TimeNameFunc(::tm* time, unsigned long logNumber,
-                  std::string& newFileName, void* context)
+void TimeNameFunc(::tm* time, unsigned long /* logNumber */,
+                  std::string& newFileName, void* /* context */)
 {
     std::ostringstream fileName;
 
