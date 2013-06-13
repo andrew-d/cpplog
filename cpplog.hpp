@@ -277,7 +277,7 @@ namespace cpplog
                 m_buffer[k_logBufferCapacity] = '\0';
             }
 
-            std::streamsize length()   const { return pptr()-pbase();         }
+            std::streamsize length()   const { return pptr() - pbase();       }
             std::streamsize capacity() const { return k_logBufferCapacity;    }
             bool empty()               const { return length() == 0;          }
             bool full()                const { return length() == capacity(); }
@@ -285,7 +285,7 @@ namespace cpplog
             // Unput one character.
             int_type sunputc()
             {
-                if ( (!pptr()) || (pptr()==pbase()) )
+                if( (!pptr()) || (pptr() == pbase()) )
                     return pbackfail();
 
                 pbump(-1);
@@ -298,7 +298,7 @@ namespace cpplog
             // Peek at last inserted character.
             int peek() const
             {
-                if ( (!pptr()) || (pptr()==pbase()) )
+                if( (!pptr()) || (pptr() == pbase()) )
                     return std::char_traits<char>::eof();
 
                 return static_cast<int>(*(pptr()-1));
@@ -459,7 +459,7 @@ namespace cpplog
             m_logData->threadId     = helpers::get_thread_id();
 #endif // CPPLOG_SYSTEM_IDS
 
-            if (useDefaultLogFormat)
+            if( useDefaultLogFormat )
             {
                 InitLogMessage();
             }
@@ -474,7 +474,7 @@ namespace cpplog
                 if( sb->peek() != '\n' )
                 {
                     // If buffer is full, remove last char to leave room for newline.
-                    if (sb->full())
+                    if( sb->full() )
                         sb->sunputc();
 
                     // Insert newline

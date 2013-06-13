@@ -16,5 +16,6 @@ NOTE: Tests are relatively complete, but not exhaustive.  Please use at your own
 Thanks to (in alphabetical order):
   - fakechris [GitHub]
   - Kranar [Reddit]
+  - olajep [GitHub]
   - vvavrychuk [GitHub]
   - z00m1n [GitHub]
