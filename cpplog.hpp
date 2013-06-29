@@ -313,7 +313,7 @@ namespace cpplog
                 return pbase();
             }
         };
-    };
+    }
 
     // Logger data.  This is sent to a logger when a LogMessage is Flush()'ed, or
     // when the destructor is called.
@@ -1069,8 +1069,8 @@ namespace cpplog
         };
 
         // TODO: Implement others?
-    };
-};
+    }
+}
 
 // Our logging macros.
 
