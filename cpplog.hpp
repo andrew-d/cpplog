@@ -954,6 +954,11 @@ namespace cpplog
                 delete m_forwardTo;
         }
 
+        void SetLevel(loglevel_t allowed)
+        {
+            m_lowestLevelAllowed = allowed;
+        }
+
         virtual bool sendLogMessage(LogData* logData)
         {
             if( logData->level >= m_lowestLevelAllowed )
