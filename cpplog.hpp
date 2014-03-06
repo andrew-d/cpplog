@@ -391,10 +391,10 @@ namespace cpplog
         }
 
     public:
-        LogMessage(const char* file, unsigned int line, loglevel_t logLevel, BaseLogger* outputLogger)
+        LogMessage(const char* file, unsigned int line, loglevel_t logLevel, BaseLogger* outputLogger, bool useDefaultLogFormat=true)
             : m_logger(outputLogger)
         {
-            Init(file, line, logLevel);
+            Init(file, line, logLevel, useDefaultLogFormat);
         }
 
         LogMessage(const char* file, unsigned int line, loglevel_t logLevel, BaseLogger& outputLogger, bool useDefaultLogFormat=true)
