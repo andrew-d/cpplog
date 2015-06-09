@@ -2,6 +2,7 @@
 #ifndef _OUTPUT_DEBUG_STREAM_H
 #define _OUTPUT_DEBUG_STREAM_H
 
+#define NOMINMAX
 #include <windows.h>
 
 template <class _Elem>
