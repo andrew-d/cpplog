@@ -107,6 +107,13 @@
 #define CPPLOG_FILTER_LEVEL LL_DEBUG
 #endif
 
+// We don't have support for this in older versions of C++
+#if __cplusplus >= 201103L
+#define CPPLOG_NOEXCEPT_FALSE noexcept(false)
+#else
+#define CPPLOG_NOEXCEPT_FALSE
+#endif
+
 
 // The general concept for how logging works:
 //  - Every call to LOG(LEVEL, logger) works as follows:
@@ -403,7 +410,7 @@ namespace cpplog
             Init(file, line, logLevel, useDefaultLogFormat);
         }
 
-        virtual ~LogMessage()
+        virtual ~LogMessage() CPPLOG_NOEXCEPT_FALSE
         {
             Flush();
 
